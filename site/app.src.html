@@ -246,7 +246,7 @@ async function connect(){
   db=(window.claude&&window.claude.use)?await window.claude.use('db').catch(()=>null):null;
   if(!db) return;
   store='shared';
-  db.collection('pipeline').onSnapshot(snap=>{PIPE={};snap.docs.forEach(d=>{PIPE[d.id]=d.data()});refreshCounts();if(tab==='list')renderList();drawMarkers();if(open)renderDrawer(open)},err=>{store='local';});
+  db.collection('pipeline').onSnapshot(snap=>{PIPE={};snap.docs.forEach(d=>{PIPE[d.id]=d.data()});refreshCounts();if(tab==='list'&&!open)renderList();drawMarkers();if(open)refreshDrawerState(open)},err=>{store='local';});
 }
 connect();
 async function setPipe(apn,patch){
@@ -465,7 +465,7 @@ function renderDrawer(c){
   d.scrollTop=0;
   $('#close').onclick=closeSite;
   $('#dheart').onclick=()=>{setPipe(c.apn,{stage:p.stage?'none':'saved'}).then(()=>renderDrawer(c)); if(tab==='explore')renderExplore();};
-  $$('[data-stage]').forEach(b=>b.onclick=()=>{setPipe(c.apn,{stage:p.stage===b.dataset.stage?'none':b.dataset.stage,note:$('#note').value}).then(()=>{renderDrawer(c); tab==='list'?renderList():null});});
+  $$('[data-stage]').forEach(b=>b.onclick=()=>{const cur=(PIPE[c.apn]||{}).stage; setPipe(c.apn,{stage:cur===b.dataset.stage?'none':b.dataset.stage,note:$('#note').value}).then(()=>refreshDrawerState(c));});
   $('#rv-btn').onclick=()=>{const on=!(PIPE[c.apn]||{}).review; setPipe(c.apn,{stage:(PIPE[c.apn]||{}).stage||'saved',review:on,review_note:on?((PIPE[c.apn]||{}).review_note||''):''}).then(()=>{renderDrawer(c); if(tab==='list')renderList(); if(on) setTimeout(()=>$('#rv-note')&&$('#rv-note').focus(),50)});};
   let rt; $('#rv-note').oninput=()=>{clearTimeout(rt); rt=setTimeout(()=>setPipe(c.apn,{stage:(PIPE[c.apn]||{}).stage||'saved',review:true,review_note:$('#rv-note').value}),700)};
   let t; $('#note').oninput=()=>{clearTimeout(t); t=setTimeout(()=>{setPipe(c.apn,{stage:(PIPE[c.apn]||{}).stage||'saved',note:$('#note').value}); $('#savedmsg').textContent='Saved '+new Date().toLocaleTimeString()},700)};
@@ -499,19 +499,41 @@ function wirePencil(c){
   }
   draw();
 }
+const DRAFTS={};
+function refreshDrawerState(c){ const p=PIPE[c.apn]||{};
+  $$('[data-stage]').forEach(b=>b.setAttribute('aria-pressed',p.stage===b.dataset.stage));
+  const h=$('#dheart'); if(h){h.setAttribute('aria-pressed',!!p.stage); h.textContent=p.stage?'♥':'♡'; h.style.color=p.stage?'var(--heart)':'var(--ink)';}
+  const n=$('#note'); if(n&&document.activeElement!==n&&(p.note||'')!==n.value) n.value=p.note||'';
+  const m=$('#savedmsg'); if(m&&p.updated) m.textContent='Last change '+new Date(p.updated).toLocaleString()+(store==='shared'?' · shared list':' · this browser only');
+}
+function parseDraft(t){const sec=(k,next)=>{const re=new RegExp('^\\s*'+k+'\\s*:?\\s*$([\\s\\S]*?)(?=^\\s*(?:'+next+')\\s*:?\\s*$|$(?![\\s\\S]))','mi'); const m=t.match(re); return m?m[1].trim():''};
+  return {call:sec('CALL SCRIPT','TEXT MESSAGE|EMAIL'),text:sec('TEXT MESSAGE','EMAIL|CALL SCRIPT'),email:sec('EMAIL','CALL SCRIPT|TEXT MESSAGE')};}
+function showDrafts(out,r){
+  out.innerHTML='<div class="badge">Drafts · not sent</div>'+['call','text','email'].map(k=>`<div><div class="src" style="display:flex;justify-content:space-between;align-items:center">${{call:'Call script',text:'Text message',email:'Email'}[k]} <button data-copy="${k}" style="min-height:36px">Copy</button></div><div class="draft" id="d-${k}">${esc(String(r[k]||'(none)'))}</div></div>`).join('');
+  out.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{const el=$('#d-'+b.dataset.copy);try{await navigator.clipboard.writeText(el.textContent);b.textContent='Copied'}catch(e){const s=getSelection(),rg=document.createRange();rg.selectNodeContents(el);s.removeAllRanges();s.addRange(rg);b.textContent='Selected'}});
+}
 async function wireDraft(c){
   const btn=$('#draft'), stop=$('#stop'), out=$('#drafts');
+  if(DRAFTS[c.apn]){ showDrafts(out,DRAFTS[c.apn]); btn.textContent='Draft again'; }
   const sample=(window.claude&&window.claude.use)?await window.claude.use('sample').catch(()=>null):null;
   if(!sample){btn.disabled=true;btn.textContent='Open in Claude to draft';return}
   let ctl; stop.onclick=()=>ctl&&ctl.abort();
-  btn.onclick=async()=>{ctl=new AbortController();btn.disabled=true;stop.hidden=false;out.innerHTML='<div class="fine">Thinking…</div>';
-    const facts={site:name(c),city:c.city,parcel:c.apn,acres:c.acres,kind:KIND[kindKey(c)],laws:laws(c).map(l=>l.name),zoning:c.zoning_city_code,hazards:c.hazards,transit:c.hqta,opportunity:c.tcac_2021,fund:{typical_condo:c.fund.typical_condo_value,family_can_pay_today:c.fund.affordable_price_low_income_4p.fha_6625,family_can_pay_at_0:c.fund.affordable_price_low_income_4p.rate_0,city_program:c.fund.city_program},institution:c.worship?{name:c.worship.name,denomination:c.worship.denomination}:null,agency:c.noa_agency||null,my_notes:(PIPE[c.apn]||{}).note||null};
-    const prompt=`You draft outreach for a one-person acquisitions lead at a small nonprofit that builds affordable ownership homes in Orange County, California. Write to the ORGANIZATION'S OFFICE (a congregation, a public agency, or "the owner of record"), never to a named individual. Use only the facts below; where a fact is missing say "unknown" rather than inventing it. Name the law that may apply and say plainly that eligibility, ownership and hazards still have to be verified. Plain words, warm and short. These are drafts a human will edit and send; do not claim anything was sent.\nFacts (JSON): ${JSON.stringify(facts)}\nReply with only JSON: {"call":"a 6-line phone script","text":"one SMS under 320 characters","email":"an email under 170 words, subject line first"}`;
-    try{const r=await sample.json(prompt,{signal:ctl.signal,onText:({text})=>{out.innerHTML='<div class="fine">Writing…</div><div class="draft">'+esc(text.slice(-500))+'</div>'}});
-      out.innerHTML='<div class="badge">Drafts · not sent</div>'+['call','text','email'].map(k=>`<div><div class="src" style="display:flex;justify-content:space-between;align-items:center">${{call:'Call script',text:'Text message',email:'Email'}[k]} <button data-copy="${k}" style="min-height:34px">Copy</button></div><div class="draft" id="d-${k}">${esc(String(r[k]||'(none)'))}</div></div>`).join('');
-      $$('[data-copy]').forEach(b=>b.onclick=async()=>{const el=$('#d-'+b.dataset.copy);try{await navigator.clipboard.writeText(el.textContent);b.textContent='Copied'}catch(e){const s=getSelection(),rg=document.createRange();rg.selectNodeContents(el);s.removeAllRanges();s.addRange(rg);b.textContent='Selected'}});
-      if(!(PIPE[c.apn]||{}).stage) setPipe(c.apn,{stage:'research'}).then(()=>{$$('[data-stage]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.stage==='research'))});
-    }catch(e){out.innerHTML=`<div class="fine">${e.code==='cancelled'?'Stopped.':e.code==='not_granted'?'Claude isn’t allowed for this page in this view.':e.code==='rate_limited'?'Too many requests right now. Try again in a minute.':'Could not draft ('+esc(e.code||'error')+').'}</div>`}
+  btn.onclick=async()=>{ctl=new AbortController();btn.disabled=true;stop.hidden=false;out.innerHTML='<div class="fine">Writing… (first time, Claude asks you to allow it)</div>';
+    const facts={site:name(c),city:c.city,parcel:c.apn,acres:c.acres,open_acres:c.open_acres,homes_estimate:c.homes,kind:KIND[kindKey(c)],laws:laws(c).map(l=>l.name),zoning:c.zoning_city_code,hazards:c.hazards,near_frequent_transit:c.hqta!=='no',real_deal:REAL[c.apn]?REAL[c.apn].t:null,institution:c.worship?{name:c.worship.name,denomination:c.worship.denomination}:null,agency:c.noa_agency||null,city_help_per_home:c.fund.city_program==='unknown'?null:c.fund.city_program.per_unit,my_notes:(PIPE[c.apn]||{}).note||null};
+    const prompt=`You write first-contact outreach for a one-person acquisitions lead at Habitat for Humanity of Orange County, a nonprofit that builds affordable homes families buy. Write to the ORGANIZATION'S OFFICE (a congregation's office, a public agency, or "the owner of record"), never to a named person. Use only these facts; if something is missing, leave it out or say it is unknown. Do not invent numbers, people, dates or promises. Mention the law that may apply in one plain sentence and say it still needs to be confirmed. Warm, short, plain words; the goal is a 20-minute conversation, not a deal.
+Facts: ${JSON.stringify(facts)}
+Write exactly three sections with these headings on their own lines and nothing before the first heading:
+CALL SCRIPT
+(5 to 7 short lines: who you are, why you're calling about this property, one sentence on the law, the ask for a short meeting, and what to say if they're not interested)
+TEXT MESSAGE
+(one message under 300 characters)
+EMAIL
+(Subject: line first, then under 150 words, signed "[Your name], Habitat for Humanity of Orange County")`;
+    try{const {text}=await sample(prompt,{signal:ctl.signal,modelTier:'quick',onText:({text})=>{out.innerHTML='<div class="fine">Writing…</div><div class="draft">'+esc(text)+'</div>'}});
+      const r=parseDraft(text); if(!r.call&&!r.text&&!r.email){r.call=text;}
+      DRAFTS[c.apn]=r; showDrafts(out,r); btn.textContent='Draft again';
+      if(!(PIPE[c.apn]||{}).stage) setPipe(c.apn,{stage:'research'}).then(()=>refreshDrawerState(c));
+    }catch(e){out.innerHTML=`<div class="fine">${e.code==='cancelled'?'Stopped.':e.code==='not_granted'?'Claude isn’t allowed for this page. Allow it from the page’s permissions and try again.':e.code==='rate_limited'?'Too many requests right now. Try again in a minute.':'Could not draft ('+esc(e.code||'error')+'). Try again.'}</div>`; if(e.text) out.innerHTML+='<div class="draft">'+esc(e.text)+'</div>';}
     finally{btn.disabled=false;stop.hidden=true}};
 }
 
