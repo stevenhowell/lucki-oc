@@ -28,5 +28,85 @@
   "website": null,
   "source_url": "https://christianity.com/church-directory/california/santa-ana/presbyterian",
   "confidence": "medium"
+ },
+ "85604121": {
+  "organization": "Trabuco Canyon Community Church",
+  "address": "30121 Canyon Creek Dr, Trabuco Canyon",
+  "phone": "(949) 858-0624",
+  "email": null,
+  "contact_form": null,
+  "website": "https://trabucochurch.org",
+  "source_url": "https://trabucochurch.org/contact",
+  "confidence": "high"
+ },
+ "85604149": {
+  "organization": "Trabuco Canyon Community Church",
+  "address": "30121 Canyon Creek Dr, Trabuco Canyon",
+  "phone": "(949) 858-0624",
+  "email": null,
+  "contact_form": null,
+  "website": "https://trabucochurch.org",
+  "source_url": "https://trabucochurch.org/contact",
+  "confidence": "high"
+ },
+ "09712324": {
+  "organization": "Vietnamese Alliance Church (Hội Thánh Tin Lành Việt Nam)",
+  "address": "8141 Washington Ave, Midway City",
+  "phone": "(714) 455-5284",
+  "email": "HoiThanhMidway@gmail.com",
+  "contact_form": null,
+  "website": "https://www.hoithanhmidway.org/",
+  "source_url": "https://www.hoithanhmidway.org/",
+  "confidence": "high"
+ },
+ "09712306": {
+  "organization": "Vietnamese Alliance Church (Hội Thánh Tin Lành Việt Nam)",
+  "address": "8141 Washington Ave, Midway City",
+  "phone": "(714) 455-5284",
+  "email": "HoiThanhMidway@gmail.com",
+  "contact_form": null,
+  "website": "https://www.hoithanhmidway.org/",
+  "source_url": "https://www.hoithanhmidway.org/",
+  "confidence": "high"
+ },
+ "09712307": {
+  "organization": "Vietnamese Alliance Church (Hội Thánh Tin Lành Việt Nam)",
+  "address": "8141 Washington Ave, Midway City",
+  "phone": "(714) 455-5284",
+  "email": "HoiThanhMidway@gmail.com",
+  "contact_form": null,
+  "website": "https://www.hoithanhmidway.org/",
+  "source_url": "https://www.hoithanhmidway.org/",
+  "confidence": "high"
+ },
+ "38306109": {
+  "organization": "La Purisima Catholic Church",
+  "address": "11712 N Hewes St, Orange",
+  "phone": "(714) 633-5800",
+  "email": "office@lapurisima.net",
+  "contact_form": null,
+  "website": "http://lapurisima.net",
+  "source_url": "https://catholicmasstime.org/church/la-purisima-catholic-church/2163/",
+  "confidence": "medium"
+ },
+ "39540102": {
+  "organization": "Trinity United Presbyterian Church",
+  "address": "13922 Prospect Ave, Santa Ana (North Tustin)",
+  "phone": "714-544-7850",
+  "email": null,
+  "contact_form": null,
+  "website": null,
+  "source_url": "https://churchstaffing.com/church/185567/trinity-united-presbyterian-church",
+  "confidence": "medium"
+ },
+ "09712322": {
+  "organization": "Friends Community Church",
+  "address": "14762 Jackson St, Midway City",
+  "phone": "(714) 891-9779",
+  "email": null,
+  "contact_form": null,
+  "website": null,
+  "source_url": "https://churcheslist.com/friends-community-church-8",
+  "confidence": "medium"
  }
 }
