@@ -717,6 +717,17 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 .static{cursor:grab;touch-action:none}
 .static.dragging{cursor:grabbing}
 .static .frame{transform-origin:0 0;will-change:transform}
+
+@media (min-width:901px){
+.main{grid-template-columns:minmax(300px,34vw) minmax(0,1fr)}
+.mapwrap{align-self:start;min-height:0;aspect-ratio:1.45;margin:12px 0 0 12px;border-radius:12px;overflow:visible;background:transparent}
+.mapwrap .static{border-radius:12px;overflow:hidden;background:#2a2d29}
+.slegend{top:calc(100% + 10px);bottom:auto;left:0;font-size:12px}
+.maptoggle{top:8px;right:8px;min-height:36px;padding:6px 12px;font-size:14px}
+.static .note{left:8px!important;top:8px!important;max-width:calc(100% - 110px);white-space:normal;font-size:11px;line-height:1.3}
+}
+.zoomctl{display:none!important}
+.static,.static.dragging{cursor:default}
 .maphide{position:absolute;left:-22px;top:50%;transform:translateY(-50%);z-index:1002;width:44px;height:44px;min-height:44px;border-radius:50%;padding:0;font-size:24px;line-height:1;display:grid;place-items:center;background:var(--panel,#fff);border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
 .maphide:active{transform:translateY(-50%) scale(.94)}
 body.nomap .main{grid-template-columns:minmax(0,1fr)}
@@ -961,7 +972,7 @@ const merc=(lon,lat)=>[lon*R/180, Math.log(Math.tan((90+lat)*Math.PI/360))/(Math
 let VIEW='sat'; let ZS=1, TX=0, TY=0; const STATIC_LAYERS={}; const LAYER_DATA={};
 function applyZoom(){const f=$('#static .frame'); if(!f) return; const box=$('#static').getBoundingClientRect(), fr=f.getBoundingClientRect(); f.style.transform=`translate(${TX}px,${TY}px) scale(${ZS})`; $('#z-out').disabled=ZS<=1; $('#z-in').disabled=ZS>=8;
   f.querySelectorAll('circle').forEach(c=>{const r0=+c.dataset.r; if(r0) c.setAttribute('r',(r0/Math.sqrt(ZS)).toFixed(1))}); f.querySelectorAll('text').forEach(t=>{const s0=+t.dataset.s; if(s0) t.setAttribute('font-size',(s0/Math.sqrt(ZS)).toFixed(1))});}
-function zoomBy(k,cx,cy){const box=$('#static').getBoundingClientRect(); const f=$('#static .frame'); if(!f) return; const fx=cx??box.width/2, fy=cy??box.height/2;
+function zoomBy(k,cx,cy){return;const box=$('#static').getBoundingClientRect(); const f=$('#static .frame'); if(!f) return; const fx=cx??box.width/2, fy=cy??box.height/2;
   const nz=Math.min(8,Math.max(1,ZS*k)); const ox=f.offsetLeft, oy=f.offsetTop; const px=(fx-ox-TX)/ZS, py=(fy-oy-TY)/ZS; ZS=nz; TX=fx-ox-px*ZS; TY=fy-oy-py*ZS; if(ZS===1){TX=0;TY=0} applyZoom();}
 function drawStatic(){
   const box=$('#static'); if(!box||interactive) return;
