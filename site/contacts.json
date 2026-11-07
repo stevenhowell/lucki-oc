@@ -160,13 +160,13 @@
   "confidence": "high"
  },
  "40131120": {
-  "organization": "Unity of Tustin / Chapel in the Orange Grove",
+  "organization": "Unity of Tustin",
   "address": "14402 Prospect Ave, Tustin",
   "phone": "(714) 730-3444",
-  "email": null,
+  "email": "unity@unitytustin.org",
   "contact_form": null,
-  "website": null,
-  "source_url": "https://churcheslist.com/chapel-in-the-sacred-garden",
+  "website": "https://www.unitytustin.org",
+  "source_url": "https://www.meetup.com/unity-of-tustin-church-meditation-gardens/",
   "confidence": "medium"
  },
  "50107210": {
@@ -207,6 +207,26 @@
   "contact_form": null,
   "website": null,
   "source_url": "https://dioceseofocstg.wpengine.com/directories/parishes/saint-justin-martyr-catholic-church",
+  "confidence": "medium"
+ },
+ "61604101": {
+  "organization": "Lutheran Church of the Cross",
+  "address": "24231 El Toro Rd, Laguna Woods",
+  "phone": "(949) 837-4673",
+  "email": null,
+  "contact_form": null,
+  "website": "https://lcotc.org",
+  "source_url": "https://www.bibletimes.app/find-a-church/us/california/lake-forest/lutheran-church-of-the-cross",
+  "confidence": "medium"
+ },
+ "39619144": {
+  "organization": "Orange County Classical Academy, tenant on this church campus (ask who owns it)",
+  "address": "2130 N Grand Ave, Santa Ana",
+  "phone": "(657) 223-9420",
+  "email": "info@orangecountyclassicalacademy.org",
+  "contact_form": null,
+  "website": "https://orangecountyclassicalacademy.org",
+  "source_url": "https://orangecountyclassicalacademy.org/?p=1045",
   "confidence": "medium"
  }
 }
