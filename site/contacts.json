@@ -1,0 +1,32 @@
+{
+ "10165213": {
+  "organization": "Wintersburg Presbyterian Church",
+  "address": "2000 N Fairview St, Santa Ana, CA 92706",
+  "phone": "(714) 740-9400",
+  "email": null,
+  "contact_form": "https://wintersburg.churchcenter.com/people/forms/267322",
+  "website": "https://wintersburg.org",
+  "source_url": "https://wintersburg.org/about-us",
+  "confidence": "high"
+ },
+ "18804106": {
+  "organization": "Our Lady of La Vang Catholic Church",
+  "address": "288 S Harbor Blvd, Santa Ana, CA 92704",
+  "phone": "(714) 775-6200",
+  "email": "parish@ourladyoflavang.org",
+  "contact_form": "https://ourladyoflavang.org/muc-vu-gx/lien-he-voi-giao-xu/",
+  "website": "https://ourladyoflavang.org",
+  "source_url": "https://ourladyoflavang.org",
+  "confidence": "high"
+ },
+ "01308434": {
+  "organization": "Orange Canaan Presbyterian Church (also listed as Wilshire Presbyterian Church)",
+  "address": "940 W Wilshire Ave, Santa Ana, CA 92707",
+  "phone": "714-549-0121",
+  "email": null,
+  "contact_form": null,
+  "website": null,
+  "source_url": "https://christianity.com/church-directory/california/santa-ana/presbyterian",
+  "confidence": "medium"
+ }
+}
