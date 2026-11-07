@@ -234,11 +234,11 @@ const REAL={
 // ---------- data ----------
 $('#cards').innerHTML='<div class="empty"><b>Loading sites…</b><span>About 11,000 sites across Orange County.</span></div>';
 let D,AER,BASE; const OV=await fetch('overview.json').then(r=>r.ok?r.json():null).catch(()=>null); const CITYV=await fetch('cities.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
-try{ [D,AER,BASE]=await Promise.all([fetch('candidates.json').then(r=>{if(!r.ok) throw new Error('candidates.json '+r.status); return r.json()}),fetch('aerials.json').then(r=>r.json()).catch(()=>({})),fetch('base.json').then(r=>r.json()).catch(()=>[])]); }
+try{ [D,AER,BASE]=await Promise.all([fetch('candidates.json').then(r=>{if(!r.ok) throw new Error('candidates.json '+r.status); return r.json()}),fetch('aerials.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({})),fetch('base.json').then(r=>r.json()).catch(()=>[])]); }
 catch(e){ $('#cards').innerHTML=`<div class="empty"><b>Sites didn’t load.</b><span>${String(e&&e.message||e)}. Reload the page; if it keeps happening, the data file may still be publishing.</span><button onclick="location.reload()">Reload</button></div>`; return; }
 const C=D.candidates; const byApn=new Map(C.map(c=>[c.apn,c]));
-let CONTACTS={}; fetch('contacts.json').then(r=>r.ok?r.json():{}).then(j=>{CONTACTS=j||{}; if(tab==='explore'&&!open) renderExplore(); if(open) renderDrawer(open);}).catch(()=>{});
-let COUNCIL={byCity:{},byApn:{}}; fetch('council.json').then(r=>r.ok?r.json():null).then(j=>{if(j){COUNCIL=j; if(tab==='explore'&&!open) renderExplore(); if(open) renderDrawer(open);}}).catch(()=>{});
+let CONTACTS={}; fetch('contacts.json',{cache:'no-cache'}).then(r=>r.ok?r.json():{}).then(j=>{CONTACTS=j||{}; if(tab==='explore'&&!open) renderExplore(); if(open) renderDrawer(open);}).catch(()=>{});
+let COUNCIL={byCity:{},byApn:{}}; fetch('council.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{if(j){COUNCIL=j; if(tab==='explore'&&!open) renderExplore(); if(open) renderDrawer(open);}}).catch(()=>{});
 const recHtml=r=>`<div style="border-top:1px solid var(--line);padding-top:6px"><div><b>${esc(r.project||r.address||'Council item')}</b>${r.units?` · ${r.units} homes`:''}${r.tenure?` · ${esc(r.tenure)}`:''}</div><div class="src">${esc(r.date||'date unknown')} · ${esc(r.body||'')}${r.decision?' · '+esc(r.decision):''}${r.money?' · '+esc(r.money):''}</div>${r.summary?`<div>${esc(r.summary)}</div>`:''}${r.issues&&r.issues.length?`<div class="src">Issues raised: ${esc(r.issues.join(', '))}</div>`:''}${r.url?`<div class="src"><a href="${esc(r.url)}" target="_blank" rel="noopener">Read the record</a></div>`:''}</div>`;
 fetch('outlines.json').then(r=>r.ok?r.json():{}).then(o=>{for(const [a,g] of Object.entries(o)){const c=byApn.get(a); if(c) c.geometry=g;} if(typeof drawMarkers==='function') drawMarkers(); if(open) renderDrawer(open);}).catch(()=>{});
 const cities=[...new Set(C.map(c=>c.city).filter(Boolean))].sort();
