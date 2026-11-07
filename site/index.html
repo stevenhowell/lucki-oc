@@ -1,0 +1,1103 @@
+<meta charset="utf-8">
+<title>Lucki</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+/* Layout: listings app. Top bar (search + filter pills + tabs) · map left, cards right · site drawer slides over the cards. */
+:root{
+  --paper:#f5f6f2; --ink:#161a16; --muted:#5b625a; --line:#d9ddd5; --panel:#ffffff; --soft:#eef1eb;
+  --accent:#2f6b3a; --accent-ink:#ffffff; --heart:#d4482a; --select:#e0662f;
+  --pass:#2f6b3a; --warn:#a86c12; --fail:#b3261e; --unknown:#6b7280;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Public Sans",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#121512;--ink:#eef0ea;--muted:#a3aa9f;--line:#2b302b;--panel:#1b1f1b;--soft:#232823;--accent:#7fc48c;--accent-ink:#0f1a10;--heart:#ff7a5c;--select:#ff8a5b;--pass:#7fc48c;--warn:#e0b05a;--fail:#f28b82;--unknown:#9aa0a6;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#121512;--ink:#eef0ea;--muted:#a3aa9f;--line:#2b302b;--panel:#1b1f1b;--soft:#232823;--accent:#7fc48c;--accent-ink:#0f1a10;--heart:#ff7a5c;--select:#ff8a5b;--pass:#7fc48c;--warn:#e0b05a;--fail:#f28b82;--unknown:#9aa0a6;color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font:14px/1.45 var(--body);display:flex;flex-direction:column;overflow:hidden}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+a{color:var(--accent)}
+button,select,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer;min-height:40px;border-radius:999px;border:1px solid var(--line);background:var(--panel);padding:0 14px;white-space:nowrap}
+button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--select);outline-offset:2px}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);border-radius:10px;min-height:44px;font-weight:600}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:1000}
+.tagline{font-size:12px;color:var(--muted);max-width:180px;line-height:1.25}
+@media (max-width:1100px){.tagline{display:none}}
+.brand{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.01em}
+.search{min-height:40px;border:1px solid var(--line);border-radius:999px;padding:0 14px;background:var(--panel);min-width:200px}
+.pill{position:relative}
+.pill>button[aria-expanded="true"]{border-color:var(--ink)}
+.pill .count{color:var(--accent);font-weight:700}
+.pop{position:absolute;top:46px;left:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px;display:grid;gap:8px;min-width:260px;z-index:1100}
+.pop label{display:flex;gap:10px;align-items:center;min-height:32px;cursor:pointer}
+.pop .sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+.pop .note{font-size:12px;color:var(--muted)}
+.spacer{flex:1}
+.tabs{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.tabs button{border:0;border-radius:0;min-height:38px}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--panel)}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,1fr)}
+#map{min-height:300px;height:100%;background:#2a2d29}
+.side{position:relative;min-width:0;display:flex;flex-direction:column;background:var(--paper);border-left:1px solid var(--line)}
+.sidehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px 8px}
+.sidehead h2{font-size:20px}
+.sidehead .sub{color:var(--muted);font-size:13px}
+.sidehead select{min-height:36px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 8px}
+.sidehead .move{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.cards{overflow:auto;flex:1;min-height:0;padding:4px 16px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;align-content:start;grid-auto-rows:max-content}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-width:0}
+.card:hover{box-shadow:0 4px 16px rgba(0,0,0,.10)}
+.card[aria-current="true"]{outline:2px solid var(--select)}
+.thumb{position:relative;aspect-ratio:16/10;background:var(--soft);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:12px;text-align:center;padding:8px}
+.thumb .kind{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.62);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
+.heart{position:absolute;right:6px;top:6px;width:40px;height:40px;min-height:40px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;font-size:20px;line-height:40px;text-align:center}
+.heart[aria-pressed="true"]{color:var(--heart);background:#fff}
+.cbody{padding:10px 12px 12px;display:grid;gap:4px;min-width:0}
+.ctitle{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cline{font-size:13px;color:var(--muted)}
+.homes{font-family:var(--display);font-weight:700;font-size:18px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--soft)}
+.tag.review{background:#fde8cf;color:#8a4b00}
+.tag.pass{color:var(--pass)}.tag.warn{color:var(--warn)}.tag.fail{color:var(--fail)}.tag.unknown{color:var(--unknown)}.tag.stage{background:var(--accent);color:var(--accent-ink)}
+.more{grid-column:1/-1;text-align:center;color:var(--muted);padding:8px}
+.empty{grid-column:1/-1;padding:24px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
+.drawer{position:absolute;inset:0;background:var(--panel);overflow:auto;z-index:5;display:flex;flex-direction:column}
+.dhead{display:flex;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.dhead h2{font-size:18px}
+.dbody{padding:0 0 24px;display:grid;gap:14px}
+.hero{position:relative;background:#222}
+.hero img{width:100%;display:block}
+.hero svg{position:absolute;inset:0;width:100%;height:100%}
+.hero .credit{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:6px}
+.pad{padding:0 16px;display:grid;gap:12px}
+.verdict{font-size:15px;line-height:1.5;margin:0}
+.track{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;background:var(--soft)}
+.stages{display:flex;gap:6px;flex-wrap:wrap}
+.stages button{min-height:36px;font-size:13px}
+.stages button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--panel);resize:vertical;box-sizing:border-box}
+.saved{font-size:12px;color:var(--muted)}
+.q{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.q>summary{list-style:none;display:grid;grid-template-columns:1fr auto 16px;gap:10px;align-items:center;padding:12px 14px;min-height:44px;cursor:pointer}
+.q>summary::-webkit-details-marker{display:none}
+.q>summary::after{content:"›";color:var(--muted);font-size:18px;transition:transform .15s}
+.q[open]>summary::after{transform:rotate(90deg)}
+.q .qq{font-weight:600}
+.q .body{padding:0 14px 14px;display:grid;gap:10px;font-size:13px}
+.ans{font-size:13px;font-weight:700;white-space:nowrap}
+.ans.pass{color:var(--pass)}.ans.warn{color:var(--warn)}.ans.fail{color:var(--fail)}.ans.unknown{color:var(--unknown)}
+.chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:var(--soft)}
+.chip.pass{color:var(--pass)}.chip.warn{color:var(--warn)}.chip.unknown{color:var(--unknown)}
+.src{font-size:12px;color:var(--muted)}
+.fine{font-size:12px;color:var(--muted)}
+.draft{white-space:pre-wrap;font-size:13px;background:var(--soft);border-radius:8px;padding:10px;overflow-wrap:anywhere}
+.badge{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fail);font-weight:700}
+.board{grid-column:1/-1;display:grid;gap:18px}
+.board h3{font-size:15px;display:flex;gap:8px;align-items:baseline}
+.board h3 .n{color:var(--muted);font-family:var(--body);font-weight:600;font-size:13px}
+.board .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;grid-auto-rows:max-content}
+.legend{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;display:grid;gap:4px;max-width:220px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+.foot{font-size:11px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--line);background:var(--panel)}
+.leaflet-container{font:inherit;background:#2a2d29}
+.leaflet-tooltip{font:12px var(--body)}
+@media (max-width:900px){body{overflow:auto}.main{grid-template-columns:1fr;grid-template-rows:46vh auto}.side{border-left:0;border-top:1px solid var(--line);min-height:70vh}.search{min-width:0;flex:1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="bar">
+  <span class="brand" title="Land Utilized for Community Kindness Information">Lucki</span><span class="tagline">Land Utilized for Community Kindness Information</span>
+  <select id="city" class="search" aria-label="City"><option value="">All of Orange County</option></select>
+  <div class="pill"><button id="b-kind" aria-expanded="false">Kind of land <span class="count" id="c-kind"></span></button>
+    <div class="pop" id="p-kind" hidden>
+      <label><input type="checkbox" data-kind="religious_use" checked> <i class="sw" style="background:#3a8a49"></i>Church land <span class="note">SB 4</span></label>
+      <label><input type="checkbox" data-kind="housing_element_site" checked> <i class="sw" style="background:#2b7bd0"></i>City-approved site <span class="note">Housing Element</span></label>
+      <label><input type="checkbox" data-kind="vacant" checked> <i class="sw" style="background:#c98a1a"></i>Empty lot <span class="note">SB 9 / SB 684</span></label>
+      <label><input type="checkbox" data-kind="surplus_land_notice" checked> <i class="sw" style="background:#8a5bc9"></i>Public land <span class="note">Surplus Land Act</span></label>
+      <label><input type="checkbox" data-kind="conversion" checked> <i class="sw" style="background:#0f8a8a"></i>Apartments to convert <span class="note">like 425 E. Wellington</span></label>
+    </div></div>
+  <div class="pill"><button id="b-more" aria-expanded="false">Filters <span class="count" id="c-more"></span></button>
+    <div class="pop" id="p-more" hidden>
+      <label><input type="checkbox" id="f-safe"> Hide sites in a flood, fire or liquefaction zone</label>
+      <label><input type="checkbox" id="f-transit"> Only near frequent transit</label>
+      <label><input type="checkbox" id="f-pencil"> Only where a home pencils at 0% (land donated for church and public land)</label>
+      <label><input type="checkbox" id="f-room" checked> Hide sites with no room for a home</label>
+      <label><input type="checkbox" id="f-review"> Hide sites that need review</label>
+      <label>Open land at least <select id="f-size"><option value="0">any</option><option value="0.25">¼ acre</option><option value="0.5">½ acre</option><option value="1">1 acre</option><option value="2">2 acres</option></select></label>
+    </div></div>
+  <div class="pill"><button id="b-layers" aria-expanded="false">Map layers <span class="count" id="c-layers"></span></button>
+    <div class="pop" id="p-layers" hidden>
+      <div class="note">What Lucki checks, drawn on the map</div>
+      <label><input type="checkbox" data-layer="flood"> <i class="sw" style="background:#2b7bd0"></i>Flood zones <span class="note">FEMA, via OC</span></label>
+      <label><input type="checkbox" data-layer="liquefaction"> <i class="sw" style="background:#c98a1a"></i>Liquefaction zones <span class="note">CGS</span></label>
+      <label><input type="checkbox" data-layer="fire"> <i class="sw" style="background:#d4482a"></i>Wildfire zones <span class="note">CAL FIRE LRA</span></label>
+      <label><input type="checkbox" data-layer="transit"> <i class="sw" style="background:#14a3a3"></i>Frequent transit <span class="note">Caltrans HQTA</span></label>
+      <label><input type="checkbox" data-layer="opportunity"> <i class="sw" style="background:linear-gradient(90deg,#d9534f,#f0ad4e,#5cb85c)"></i>Opportunity areas <span class="note">TCAC/HCD 2021</span></label>
+      <label><input type="checkbox" data-layer="housing_element"> <i class="sw" style="background:#2b7bd0;opacity:.5"></i>All city-approved sites <span class="note">SCAG</span></label>
+    </div></div>
+  <span class="spacer"></span>
+  <div class="tabs" role="tablist"><button role="tab" id="t-explore" aria-selected="true">Explore</button><button role="tab" id="t-list" aria-selected="false">My list <span id="c-list"></span></button></div>
+</header>
+
+<div class="main">
+  <div id="map" aria-label="Map of candidate sites"></div>
+  <section class="side">
+    <div class="sidehead" id="sh-explore">
+      <div style="min-width:0;flex:1"><h2 id="h-title">Orange County</h2><div class="sub" id="h-sub"></div></div>
+      <label class="move"><input type="checkbox" id="f-move"> Only what's on the map</label>
+      <select id="sort" aria-label="Sort"><option value="best">Most homes</option><option value="size">Most open land</option><option value="gap">Smallest gap per home</option></select>
+    </div>
+    <div class="sidehead" id="sh-list" hidden><div style="flex:1"><h2>My list</h2><div class="sub" id="l-sub">Sites you saved, by where they stand.</div></div></div>
+    <div class="cards" id="cards"></div>
+    <div class="drawer" id="drawer" hidden></div>
+  </section>
+</div>
+<div class="foot">Prototype. Not legal, financial or lending advice. Drafts are never sent. Church land is read from land-use data, not verified ownership. Aerials: County of Orange (2025 1-ft base, 2022 3-inch lots). Sources and assumptions in each site's details.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(async function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m]);
+const fmt=n=>n==null?'unknown':'$'+Math.round(n).toLocaleString();
+const COLORS={religious_use:'#3a8a49',housing_element_site:'#2b7bd0',vacant:'#c98a1a',surplus_land_notice:'#8a5bc9',conversion:'#0f8a8a'};
+const KIND={religious_use:'Church land',housing_element_site:'City-approved site',vacant:'Empty lot',surplus_land_notice:'Public land',conversion:'Apartments to convert'};
+const STAGES=[['saved','Saved'],['research','Researching'],['contacted','Contacted'],['meeting','Meeting set'],['passed','Passed']];
+const LAW={
+  religious_use:{name:'SB 4 (2023): housing on faith and nonprofit-college land',url:'https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/aff-hsg-faith-higher-ed-sb-4.pdf',note:'Applies if the owner is a religious institution or an independent college. This lot is tagged “Religious Facilities” in SCAG land-use data: a lead, not a title check.'},
+  housing_element_site:{name:'Housing Element site inventory (Gov. Code 65583.2)',url:'https://hcd.ca.gov/housing-element/sites-inventory',note:'The city listed this lot as a place housing can go when it adopted its Housing Element. Check whether it has since sold or been built.'},
+  vacant_sfr:{name:'SB 9 (2021): lot splits and duplexes',url:'https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/sb-9-fact-sheet.pdf',note:'Empty and zoned single-family. SB 9 excludes historic districts and some hazard areas.'},
+  vacant_other:{name:'SB 684 / SB 1123: small-lot subdivisions up to 10 homes',url:'https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/housing-law-fact-sheets.pdf',note:'Empty per SCAG land use. Lot-size limits differ by bill; read the statute.'},
+  ab2011:{name:'AB 2011: housing on commercial corridors',url:'https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=65912.101',note:'Commercially zoned and near frequent transit. Site tests apply.'},
+  conversion:{name:'Condo conversion of an existing building',url:'https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/housing-law-fact-sheets.pdf',note:'No single state law opens this: a condo conversion needs a subdivision map under the Subdivision Map Act and the city’s own conversion rules. Habitat OC is doing exactly this at 425 E. Wellington Ave in Santa Ana (9 units, 2025). Tenants come first: there, current renters under 120% of median income get the first right to buy, and $200,000 was set aside for relocation (City of Santa Ana letter A-2025-094).'},
+  surplus_land_notice:{name:'Surplus Land Act (Gov. Code 54220)',url:'https://www.hcd.ca.gov/sites/default/files/docs/planning-and-community/final-updated-surplus-land-act-guidelines-2024.pdf',note:'A public agency filed a notice that this land is surplus. Orange County notices in the state file are all archived; the agency may still hold it.'}
+};
+
+
+// ---------- pro forma (Terner Center 2024 + HCD 2026 + CalHFA; ASSUMPTIONS labelled) ----------
+const PRO={unit_sqft:1000,hard_psf:334,fees:40000,soft_pct:.20,land_psf:125,tax:.011,hoa:350,ins:120,share:.30};
+const INCOME={low:93050,moderate:148850,mix:(93050+148850)/2};
+function canPay(income,rate){const monthly=income*PRO.share/12; let lo=0,hi=3e6; for(let i=0;i<40;i++){const p=(lo+hi)/2,m=rate/12,pi=m?p*m/(1-Math.pow(1+m,-360)):p/360; if(pi+p*PRO.tax/12+PRO.hoa+PRO.ins>monthly) hi=p; else lo=p;} return Math.round(lo/1000)*1000;}
+function landDefault(c){return (c.sources.includes('religious_use')||c.sources.includes('surplus_land_notice'))?'donated':'market'}
+function siteSqft(c){return Math.round(((c.open_acres??c.acres)||0)*43560)}
+function pro(c,o={}){
+  const homes=Math.max(1,o.homes??c.homes??1), land=o.land??landDefault(c), rate=o.rate??0, fam=o.fam??'low';
+  const build=PRO.unit_sqft*PRO.hard_psf, soft=build*PRO.soft_pct, fees=PRO.fees;
+  const landTotal=land==='market'?siteSqft(c)*PRO.land_psf:0, landPer=landTotal/homes;
+  const cost=build+soft+fees+landPer, pay=canPay(INCOME[fam],rate);
+  const prog=c.fund.city_program, help=prog==='unknown'?0:prog.per_unit;
+  const gap=Math.round(cost-pay-help);
+  return {homes,land,rate,fam,build,soft,fees,landTotal,landPer,cost,pay,help,gap,total:gap*homes};
+}
+
+// ---------- data ----------
+const [D,AER,BASE]=await Promise.all([fetch('candidates.json').then(r=>r.json()),fetch('aerials.json').then(r=>r.json()).catch(()=>({})),fetch('base.json').then(r=>r.json()).catch(()=>[])]);
+const C=D.candidates; const byApn=new Map(C.map(c=>[c.apn,c]));
+const cities=[...new Set(C.map(c=>c.city).filter(Boolean))].sort();
+for(const c of cities){const o=document.createElement('option');o.value=c;o.textContent=c;$('#city').append(o)}
+
+// ---------- the list (db when the viewer serves it; this browser otherwise) ----------
+let PIPE={}; let store='local';
+try{PIPE=JSON.parse(localStorage.getItem('lucki.pipe')||'{}')}catch(e){}
+let db=null;
+async function connect(){
+  db=(window.claude&&window.claude.use)?await window.claude.use('db').catch(()=>null):null;
+  if(!db) return;
+  store='shared';
+  db.collection('pipeline').onSnapshot(snap=>{PIPE={};snap.docs.forEach(d=>{PIPE[d.id]=d.data()});refreshCounts();if(tab==='list')renderList();drawMarkers();if(open)renderDrawer(open)},err=>{store='local';});
+}
+connect();
+async function setPipe(apn,patch){
+  const cur=PIPE[apn]||{}; const next={...cur,...patch,apn,updated:new Date().toISOString()};
+  if(next.stage==='none'){delete PIPE[apn]} else PIPE[apn]=next;
+  refreshCounts(); drawMarkers();
+  if(store==='shared'&&db){ try{ if(next.stage==='none') await db.collection('pipeline').doc(apn).delete(); else await db.collection('pipeline').doc(apn).set(next);}catch(e){ toast('Could not save to the shared list ('+(e.code||'error')+'). Saved in this browser.'); store='local'; } }
+  if(store==='local'){try{localStorage.setItem('lucki.pipe',JSON.stringify(PIPE))}catch(e){}}
+}
+function toast(t){const el=$('#h-sub');el.textContent=t}
+
+// ---------- map ----------
+const R=20037508.34; const unproj=(x,y)=>[Math.atan(Math.exp(y/R*Math.PI))*360/Math.PI-90, x/R*180];
+const bnd=bb=>L.latLngBounds(unproj(bb[0],bb[1]),unproj(bb[2],bb[3]));
+const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:9,maxZoom:20,attributionControl:false}).setView([33.70,-117.84],10);
+let sized=false; new ResizeObserver(()=>{const z=map.getSize(); map.invalidateSize(); if(!sized&&$('#map').clientHeight>50){sized=true; fitCity(); update();}}).observe(document.getElementById('map'));
+BASE.forEach(t=>L.imageOverlay(t.file,bnd(t.bbox3857),{interactive:false}).addTo(map));
+const lotImgs=L.layerGroup().addTo(map); const shownImgs=new Map();
+const dots=L.layerGroup().addTo(map), outlines=L.layerGroup().addTo(map);
+const layerStyle={
+  flood:{color:'#2b7bd0',weight:1,fillColor:'#2b7bd0',fillOpacity:.28},
+  liquefaction:{color:'#c98a1a',weight:1,fillColor:'#c98a1a',fillOpacity:.18,dashArray:'4 3'},
+  fire:{color:'#d4482a',weight:1,fillColor:'#d4482a',fillOpacity:.25},
+  transit:{color:'#14a3a3',weight:1,fillColor:'#14a3a3',fillOpacity:.14},
+  housing_element:{color:'#2b7bd0',weight:1,fillColor:'#2b7bd0',fillOpacity:.35}
+};
+const OPP={'Highest Resource':'#2e8b57','High Resource':'#6dbf6d','Moderate Resource':'#f0c24e','Moderate Resource (Rapidly Changing)':'#f0a24e','Low Resource':'#e07a5f','High Segregation & Poverty':'#b3261e'};
+const LAYERS={}; const legend=L.control({position:'bottomleft'});
+legend.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.id='legend';return d};legend.addTo(map);
+async function toggleLayer(name,on){
+  if(on&&!LAYERS[name]){const g=await fetch('layers/'+name+'.json').then(r=>r.json());
+    LAYERS[name]=L.geoJSON(g,{interactive:name==='opportunity',style:f=>name==='opportunity'?{color:'#333',weight:.4,fillColor:OPP[(f.properties.oppcat||'').trim()]||'#999',fillOpacity:.32}:layerStyle[name]}).bindTooltip(l=>name==='opportunity'?(l.feature.properties.oppcat||'unknown'):name==='flood'?'FEMA zone '+(l.feature.properties.FLD_ZONE||''):'',{sticky:true});}
+  if(LAYERS[name]){ if(on){LAYERS[name].addTo(map);LAYERS[name].bringToBack()} else map.removeLayer(LAYERS[name]); }
+  BASE.length; drawLegend();
+}
+function drawLegend(){const on=$$('[data-layer]').filter(i=>i.checked);$('#c-layers').textContent=on.length?'· '+on.length:'';
+  const el=$('#legend'); if(!el) return; el.innerHTML=`<div><i style="background:${COLORS.religious_use};border-radius:50%"></i>Church land</div><div><i style="background:${COLORS.housing_element_site};border-radius:50%"></i>City-approved site</div><div><i style="background:${COLORS.vacant};border-radius:50%"></i>Empty lot</div><div><i style="background:${COLORS.surplus_land_notice};border-radius:50%"></i>Public land</div><div><i style="background:${COLORS.conversion};border-radius:50%"></i>Apartments to convert</div><div><i style="background:#fff;border:2px solid ${'#d4482a'};border-radius:50%"></i>On my list</div>`+
+  on.map(i=>{const n=i.dataset.layer;return n==='opportunity'?Object.entries(OPP).map(([k,v])=>`<div><i style="background:${v}"></i>${k}</div>`).join(''):`<div><i style="background:${layerStyle[n].fillColor};opacity:.7"></i>${i.parentElement.textContent.trim().split('  ')[0]}</div>`}).join('');}
+
+// ---------- filters ----------
+let tab='explore', open=null, shown=0, rows=[];
+const kinds=()=>$$('[data-kind]').filter(i=>i.checked).map(i=>i.dataset.kind);
+function haz(c){return Object.values(c.hazards).filter(v=>v!=='none found').length}
+function reviews(c){const r=[]; const p=PIPE[c.apn]||{};
+  if(p.review) r.push({who:'team',t:'Flagged by your team'+(p.review_note?': '+p.review_note:'')});
+  if(c.roof_check==='thin') r.push({who:'lucki',t:`The county’s building map shows only ${c.n_buildings} building${c.n_buildings===1?'':'s'} on this lot; open land and homes may be too high`});
+  if(c.sources.length===1&&c.sources[0]==='vacant'&&c.n_buildings==null) r.push({who:'lucki',t:'Tagged empty in land-use data but not checked for buildings (county server stopped answering)'});
+  if(c.homes==null) r.push({who:'lucki',t:'Open land not measured, so homes are unknown'});
+  if(c.sources.includes('surplus_land_notice')&&/archive/i.test(c.noa_status||'')) r.push({who:'lucki',t:'The surplus-land notice is archived; the agency may no longer offer it'});
+  return r;}
+function pencils(c){return c.sources.includes('conversion')?(c.fund.gap_condo_at_0pct!=null&&c.fund.gap_condo_at_0pct<=0):pro(c).gap<=0}
+function filtered(){
+  const city=$('#city').value, ks=kinds(), safe=$('#f-safe').checked, tr=$('#f-transit').checked, pc=$('#f-pencil').checked, sz=+$('#f-size').value;
+  let r=C.filter(c=>(!city||c.city===city)&&c.sources.some(s=>ks.includes(s))&&(!safe||haz(c)===0)&&(!tr||c.hqta!=='no')&&(!pc||pencils(c))&&((c.open_acres??c.acres)||0)>=sz&&(!$('#f-room').checked||c.homes==null||c.homes>0)&&(!$('#f-review').checked||!reviews(c).length));
+  const s=$('#sort').value;
+  if(s==='size') r=[...r].sort((a,b)=>((b.open_acres??b.acres)||0)-((a.open_acres??a.acres)||0));
+  if(s==='gap') r=[...r].sort((a,b)=>(a.sources.includes('conversion')?(a.fund.gap_condo_at_0pct??1e9):pro(a).gap)-(b.sources.includes('conversion')?(b.fund.gap_condo_at_0pct??1e9):pro(b).gap));
+  const NK=$$('[data-kind]').length; const n=(ks.length<NK?1:0)+(safe?1:0)+(tr?1:0)+(pc?1:0)+(sz?1:0);
+  $('#c-kind').textContent=ks.length<NK?'· '+ks.length:''; $('#c-more').textContent=(n-(ks.length<NK?1:0))?'· '+(n-(ks.length<NK?1:0)):'';
+  return r;
+}
+function inView(r){const sz=map.getSize(); if(!$('#f-move').checked||sz.x<50||sz.y<50) return r; const b=map.getBounds(); return r.filter(c=>b.contains([c.centroid[1],c.centroid[0]]))}
+
+// ---------- markers ----------
+function drawMarkers(){
+  dots.clearLayers(); outlines.clearLayers();
+  const z=map.getZoom(), all=filtered(), b=map.getBounds().pad(.2);
+  const vis=all.filter(c=>b.contains([c.centroid[1],c.centroid[0]]));
+  const cap=z<12?1500:4000;
+  vis.slice(0,cap).forEach(c=>{
+    const saved=PIPE[c.apn], col=COLORS[c.sources.includes('housing_element_site')?'housing_element_site':c.sources[0]]||'#666';
+    if(z>=16&&c.geometry){L.geoJSON(c.geometry,{style:{color:saved?'#d4482a':col,weight:saved?3:2,fillColor:col,fillOpacity:open&&open.apn===c.apn?.05:.12}}).on('click',()=>openSite(c)).bindTooltip(esc(name(c)),{sticky:true}).addTo(outlines);}
+    else L.circleMarker([c.centroid[1],c.centroid[0]],{radius:saved?7:(z<12?3:5),color:saved?'#d4482a':'#fff',weight:saved?3:1,fillColor:col,fillOpacity:.95}).on('click',()=>openSite(c)).bindTooltip(esc(name(c)),{direction:'top'}).addTo(dots);
+  });
+  // 3-inch lot photos once zoomed in
+  const want=new Set(z>=16.5?vis.filter(c=>AER[c.apn]).slice(0,14).map(c=>c.apn):[]);
+  for(const [apn,lyr] of shownImgs) if(!want.has(apn)){lotImgs.removeLayer(lyr);shownImgs.delete(apn)}
+  for(const apn of want) if(!shownImgs.has(apn)){const l=L.imageOverlay('aerials/'+apn+'.jpg',bnd(AER[apn].bbox3857),{interactive:false});lotImgs.addLayer(l);shownImgs.set(apn,l)}
+}
+
+// ---------- cards ----------
+function kindKey(c){return c.sources.includes('housing_element_site')?'housing_element_site':c.sources[0]}
+function name(c){return c.worship&&c.worship.name?c.worship.name:c.noa_address?c.noa_address:KIND[kindKey(c)]+' in '+c.city}
+function gap(c){ if(!c.sources.includes('conversion')){const p=pro(c); return p.gap<=0?{t:'Pencils at 0%'+(p.land==='donated'?' · land donated':''),k:'pass'}:{t:fmt(p.gap)+' short/home at 0%',k:p.gap<100000?'warn':'fail'}} const f=c.fund; if(f.gap_condo_at_fha==null) return {t:'Pencil: unknown',k:'unknown'}; if(f.gap_condo_at_fha<=0) return {t:'Pencils today',k:'pass'}; if(f.gap_condo_at_0pct<=0) return {t:'Pencils at 0%',k:'warn'}; return {t:fmt(f.gap_condo_at_0pct)+' short',k:'fail'}}
+function card(c){
+  const a=AER[c.apn], s=PIPE[c.apn], g=gap(c), h=haz(c);
+  const el=document.createElement('article'); el.className='card'; el.tabIndex=0; el.dataset.apn=c.apn; el.setAttribute('aria-current',open&&open.apn===c.apn);
+  el.innerHTML=`<div class="thumb">${a?`<img loading="lazy" src="aerials/${esc(c.apn)}.jpg" alt="">`:`<div class="ph">No close-up photo yet<br>Zoom in on the map</div>`}<span class="kind" style="background:${COLORS[kindKey(c)]}">${KIND[kindKey(c)]}</span><button class="heart" aria-label="${s?'Remove from my list':'Save to my list'}" aria-pressed="${!!s}">${s?'♥':'♡'}</button></div>
+  <div class="cbody"><div class="ctitle">${esc(name(c))}</div><div class="homes">${c.homes==null?'Homes: unknown':c.sources.includes('conversion')?'≈ '+c.homes+' apartments to convert':c.homes>0?(c.roof_check==='thin'?'Up to ':'≈ ')+c.homes+' home'+(c.homes===1?'':'s'):'No room found'}</div>${c.apn==='39802812'?'<div class="tag stage" style="justify-self:start">Habitat OC’s own 2025 deal</div>':''}<div class="cline">${c.sources.includes('conversion')?(c.acres?c.acres.toFixed(2)+' acre lot':''):c.open_acres!=null?c.open_acres.toFixed(1)+' open acres':(c.acres?c.acres.toFixed(1)+' acres':'')} · ${esc(c.city)}</div>
+  <div class="tags"><span class="tag ${h?'warn':'pass'}">${h?h+' hazard':'No hazard zones'}</span><span class="tag ${g.k}">${g.t}</span>${c.hqta!=='no'?'<span class="tag pass">Transit</span>':''}${reviews(c).length?`<span class="tag review" title="${esc(reviews(c).map(x=>x.t).join(' · '))}">${reviews(c).some(x=>x.who==='team')?'Flagged':'Needs review'}</span>`:''}${s?`<span class="tag stage">${STAGES.find(x=>x[0]===s.stage)?.[1]||'Saved'}</span>`:''}</div></div>`;
+  el.querySelector('.heart').onclick=e=>{e.stopPropagation(); setPipe(c.apn,{stage:s?'none':'saved'}); const b=e.currentTarget; const now=!s; b.setAttribute('aria-pressed',now); b.textContent=now?'♥':'♡';};
+  el.onclick=()=>openSite(c); el.onkeydown=e=>{if(e.key==='Enter')openSite(c)};
+  return el;
+}
+let io;
+function renderExplore(){
+  rows=inView(filtered()); shown=0; const box=$('#cards'); box.innerHTML='';
+  const city=$('#city').value||'Orange County';
+  $('#h-title').textContent=city; const hh=rows.reduce((a,c)=>a+(c.homes||0),0); $('#h-sub').textContent=`≈ ${hh.toLocaleString()} homes on ${rows.length.toLocaleString()} sites${$('#f-move').checked&&map.getSize().y>50?' in this map view':''}`;
+  if(!rows.length){box.innerHTML=`<div class="empty"><b>No sites here.</b><span>Zoom out, pick another city, or loosen a filter.</span><button id="reset">Reset filters</button></div>`;$('#reset').onclick=resetFilters;return}
+  more();
+}
+function more(){
+  const box=$('#cards'); const old=box.querySelector('.more'); if(old) old.remove();
+  rows.slice(shown,shown+40).forEach(c=>box.append(card(c))); shown=Math.min(rows.length,shown+40);
+  if(shown<rows.length){const m=document.createElement('div');m.className='more';m.textContent=`Showing ${shown} of ${rows.length.toLocaleString()} · scroll for more`;box.append(m);
+    io&&io.disconnect(); io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();more()}},{root:box,rootMargin:'400px'}); io.observe(m);}
+}
+function renderList(){
+  const box=$('#cards'); box.innerHTML=''; const items=Object.values(PIPE).filter(p=>byApn.has(p.apn));
+  $('#l-sub').textContent=store==='shared'?`${items.length} saved · shared with everyone who can open this page`:`${items.length} saved · in this browser only`;
+  if(!items.length){box.innerHTML=`<div class="empty"><b>Your list is empty.</b><span>Tap the heart on any site to save it here, then move it from Saved to Contacted to Meeting set.</span><button id="go">Find sites</button></div>`;$('#go').onclick=()=>setTab('explore');return}
+  const b=document.createElement('div'); b.className='board';
+  const fl=items.filter(p=>p.review); if(fl.length){const sec=document.createElement('section'); sec.innerHTML=`<h3>Flagged for review <span class="n">${fl.length}</span></h3>`; const g=document.createElement('div'); g.className='grid'; fl.forEach(p=>g.append(card(byApn.get(p.apn)))); sec.append(g); b.append(sec);}
+  STAGES.forEach(([k,label])=>{const these=items.filter(p=>(p.stage||'saved')===k); if(!these.length) return;
+    const sec=document.createElement('section'); sec.innerHTML=`<h3>${label} <span class="n">${these.length}</span></h3>`; const g=document.createElement('div'); g.className='grid';
+    these.sort((a,b)=>(b.updated||'').localeCompare(a.updated||'')).forEach(p=>g.append(card(byApn.get(p.apn)))); sec.append(g); b.append(sec);});
+  box.append(b);
+}
+function refreshCounts(){const n=Object.keys(PIPE).filter(a=>byApn.has(a)).length; $('#c-list').textContent=n?'('+n+')':''}
+function setTab(t){tab=t; $('#t-explore').setAttribute('aria-selected',t==='explore'); $('#t-list').setAttribute('aria-selected',t==='list'); $('#sh-explore').hidden=t!=='explore'; $('#sh-list').hidden=t!=='list'; closeSite(); t==='list'?renderList():renderExplore();}
+
+// ---------- site drawer ----------
+function laws(c){const out=[]; if(c.sources.includes('religious_use')) out.push(LAW.religious_use); if(c.sources.includes('housing_element_site')) out.push(LAW.housing_element_site);
+  if(c.sources.includes('vacant')){const z=c.zoning_scag||''; out.push(['1110','1111','1112','1113'].includes(z)?LAW.vacant_sfr:LAW.vacant_other); if(z.startsWith('12')&&c.hqta!=='no') out.push(LAW.ab2011);} if(c.sources.includes('surplus_land_notice')) out.push(LAW.surplus_land_notice); if(c.sources.includes('conversion')) out.push(LAW.conversion); return out;}
+const chip=(t,k)=>`<span class="chip ${k}">${t}</span>`;
+const hz=v=>v==='none found'?chip('clear','pass'):chip(esc(v),'warn');
+const q=(qq,a,k,body)=>`<details class="q"><summary><span class="qq">${qq}</span><span class="ans ${k}">${a}</span></summary><div class="body">${body}</div></details>`;
+function verdict(c){const h=haz(c), g=gap(c); const upto=c.roof_check==='thin'?'up to ':''; const room=c.sources.includes('conversion')?`About ${c.homes} apartments (estimated from lot size). `:c.homes==null?'':c.homes>0?`Room for ${upto||'about '}${c.homes} home${c.homes===1?'':'s'}${c.open_acres!=null?` on ${upto}${c.open_acres.toFixed(1)} open acres`:''}${c.roof_share!=null&&c.roof_share>0?` (${Math.round(c.roof_share*100)}% of the lot is under a roof)`:''}. `:'Little or no open land on this lot. ';
+  const a=c.sources.includes('conversion')?(c.apn==='39802812'?'This is the building Habitat OC is already converting: 9 apartments becoming ownership condos, with $80,000 per unit from the City of Santa Ana.':'An existing low-rise apartment building on a lot the size of Habitat OC’s Wellington Ave deal. Buying and converting it to condos skips land and construction. Confirm it is a rental, not condos, and plan for the tenants.'):c.sources.includes('housing_element_site')?`The city already listed this site for housing${c.he_capacity?` (${c.he_capacity} homes)`:''}.`:c.sources.includes('religious_use')?'This is church land, which a 2023 state law (SB 4) may let the owner build homes on.':c.sources.includes('surplus_land_notice')?'A public agency offered this land as surplus.':'This lot is empty, and state law may allow small homes here.';
+  const b=h?`${h} hazard zone to check.`:'No flood, fire or liquefaction zone found.';
+  let d; if(!c.sources.includes('conversion')){const p=pro(c), t=pro(c,{rate:0.06625}); d=p.land==='donated'?(t.gap<=0?'With the land donated, a low-income family could afford a home here even at today’s rate.':p.gap<=0?'With the land donated and a 0% loan, a low-income family could afford a home here; at today’s rate each home is about '+fmt(t.gap)+' short.':'Even with the land donated and a 0% loan, each home is about '+fmt(p.gap)+' short.'):(p.gap<=0?'Bought at market, a low-income family could afford a home here with a 0% loan.':'Bought at market, each home is about '+fmt(p.gap)+' short even with a 0% loan; donated land or more homes on the lot would close it.')} else d=g.k==='pass'?'A low-income family could afford a condo here at today’s rate.':g.k==='warn'?'A low-income family could afford a condo here only with a 0% loan.':g.k==='fail'?'Even at 0% a condo here costs more than a low-income family can pay.':'';
+  const rc=c.roof_check==='thin'?` The county’s building map shows only ${c.n_buildings} building${c.n_buildings===1?'':'s'} on this ${((c.acres||c.open_acres||0)).toFixed?'':''}lot; check the photo, the open land may be less than this.`:'';
+  return `${room}${a} ${b} ${d}${rc}`;}
+function openSite(c){open=c; renderDrawer(c); const z=Math.max(map.getZoom(),17); map.flyTo([c.centroid[1],c.centroid[0]],z,{duration:.6}); $$('.card').forEach(e=>e.setAttribute('aria-current',e.dataset.apn===c.apn));}
+function closeSite(){open=null; $('#drawer').hidden=true; drawMarkers();}
+function renderDrawer(c){
+  const d=$('#drawer'); d.hidden=false; const a=AER[c.apn], f=c.fund, prog=f.city_program, g=gap(c), h=haz(c), p=PIPE[c.apn]||{};
+  let hero='';
+  if(a){const R2=20037508.34,merc=(lon,lat)=>[lon*R2/180,Math.log(Math.tan((90+lat)*Math.PI/360))/(Math.PI/180)*R2/180],px=(lon,lat)=>{const[x,y]=merc(lon,lat);return[(x-a.bbox3857[0])/(a.bbox3857[2]-a.bbox3857[0])*a.w,(a.bbox3857[3]-y)/(a.bbox3857[3]-a.bbox3857[1])*a.h]};
+    let path=''; if(c.geometry){const ps=c.geometry.type==='Polygon'?[c.geometry.coordinates]:c.geometry.coordinates; path=ps.map(pp=>pp.map(r=>'M'+r.map(pt=>px(pt[0],pt[1]).map(v=>v.toFixed(1)).join(' ')).join(' L ')+'Z').join(' ')).join(' ');}
+    hero=`<div class="hero"><img src="aerials/${esc(c.apn)}.jpg" alt="Aerial of this lot"><svg viewBox="0 0 ${a.w} ${a.h}" aria-hidden="true"><path d="${path}" fill="#e0662f" fill-opacity=".12" stroke="#ff8a5b" stroke-width="3"/></svg><span class="credit">County of Orange 3-inch aerial, 2022</span></div>`;}
+  const lawBody=laws(c).map(l=>`<div><b>${l.name}</b><div>${l.note}</div><div class="src"><a href="${l.url}" target="_blank" rel="noopener">Read the source</a></div></div>`).join('')+`<div><b>Zoning:</b> ${esc(c.zoning_city_code||'unknown')} <span class="src">City code, via SCAG 2024</span></div>`+(c.he_capacity?`<div><b>City’s plan:</b> ${c.he_capacity} homes (${c.he_low} lower-income) <span class="src">Housing Element, via SCAG</span></div>`:'')+`<div><b>Historic district:</b> ${chip('unknown','unknown')} <span class="src">not loaded yet</span></div>`;
+  const safeBody=`<div><b>Flood</b> ${hz(c.hazards.flood)} &nbsp; <b>Liquefaction</b> ${hz(c.hazards.liquefaction)} &nbsp; <b>Wildfire</b> ${hz(c.hazards.fire_lra)}</div><div class="src">OC Public Works layers, checked at the center of the lot. Turn them on under Map layers to see the zones.</div><div><b>Transit</b> ${c.hqta!=='no'?chip('near frequent transit','pass'):chip('none nearby','unknown')} <span class="src">Caltrans HQTA</span></div><div><b>Neighborhood</b> ${(c.tcac_2021||'').trim()&&c.tcac_2021!=='unknown'?chip(esc(c.tcac_2021),/High/.test(c.tcac_2021)&&!/Segregation/.test(c.tcac_2021)?'pass':'warn'):chip('unknown','unknown')} <span class="src">State opportunity map, 2021</span></div>`;
+  const fundBody=`<div><b>Typical condo here:</b> ${fmt(f.typical_condo_value)} <span class="src">Zillow, Sep 2026</span></div><div><b>A low-income family of four can pay:</b> ${fmt(f.affordable_price_low_income_4p.fha_6625)} at 6.6% · ${fmt(f.affordable_price_low_income_4p.rate_3)} at 3% · ${fmt(f.affordable_price_low_income_4p.rate_0)} at 0%</div><div class="src">Income $93,050 (bottom of HCD’s 2026 low band). 30% of income covers loan, 1.1% tax, $350 HOA, $120 insurance. ASSUMPTION.</div><div><b>City help:</b> ${prog==='unknown'?'unknown for this city':fmt(prog.per_unit)+' per home'} <span class="src">${prog==='unknown'?'No program verified':esc(prog.source)}</span></div><div class="fine">Land is not in this math. Cheap or donated land closes the rest.</div>`;
+  const who=c.worship?{a:esc(c.worship.name||'Known'),k:'pass'}:c.noa_agency?{a:esc(c.noa_agency),k:'pass'}:{a:'Unknown',k:'unknown'};
+  const whoBody=c.worship?`<div>${esc(c.worship.name)}${c.worship.denomination?' · '+esc(c.worship.denomination):''}</div>${c.worship.phone?`<div>Office: ${esc(c.worship.phone)}</div>`:''}<div class="src">OpenStreetMap. Public office contact only.</div>`:c.noa_contact?`<div>${esc(c.noa_agency)}</div><div>${esc((c.noa_contact.match(/[\w.+-]+@[\w.-]+/)||[''])[0])} · ${esc((c.noa_contact.match(/\d{3}[-.]\d{3}[-.]\d{4}/)||[''])[0])}</div><div class="src">State surplus-land notice. Staff name left out.</div>`:`<div>Public map data doesn’t say who owns this lot.</div><div class="fine">Next step: the County Assessor (in person or in writing). Parcel ${esc(c.apn)}.</div>`;
+  const rr=c.rank_reason||{}; const why=`<div><b>${c.homes==null?'Homes unknown':'≈ '+c.homes+' homes'}</b>: ${esc(c.homes_how||'')}.</div><div>Open land: ${c.open_acres!=null?c.open_acres.toFixed(2)+' acres':'unknown'} · ${esc(c.open_basis||'')}.</div><div>${rr.hazard_zones?'In a hazard zone: ×0.6. ':''}${rr.pencils_at_0pct===false?'Doesn’t pencil even at 0%: ×0.7. ':''}Ranked on ${rr.rank_value??0}.</div><div class="src">Density, church share and the two factors are ASSUMPTIONS; SB 9 and SB 684 caps from HCD fact sheets.</div><details style="margin-top:6px"><summary class="src">Old point score</summary><div>${Object.entries(c.score_parts).map(([k,v])=>`${({pathway:'Kind of land',size:'Size',zoning:'Zoning',hazards:'No hazards',transit:'Transit',opportunity:'Neighborhood',fund:'City help',slope_penalty:'Steep slope'})[k]||k} ${v>0?'+':''}${v}`).join(' · ')}</div><div class="src">Weights are our ASSUMPTION. #${c.rank} of ${C.length.toLocaleString()} county-wide.</div></details>`;
+  d.innerHTML=`<div class="dhead"><button id="close" aria-label="Back to results">← Back</button><div style="min-width:0;flex:1"><h2>${esc(name(c))}</h2><div class="src">${esc(c.city)}${c.acres?' · '+c.acres.toFixed(1)+' acres':''} · parcel ${esc(c.apn)}</div></div><button class="heart" style="position:static;background:var(--soft);color:${p.stage?'var(--heart)':'var(--ink)'}" id="dheart" aria-pressed="${!!p.stage}" aria-label="${p.stage?'Remove from my list':'Save to my list'}">${p.stage?'♥':'♡'}</button></div>
+  <div class="dbody">${hero}<div class="pad">
+    <p class="verdict">${verdict(c)}</p>
+    ${(()=>{const rv=reviews(c);return `<div class="track" style="background:${rv.length?'#fff4e5':'var(--soft)'};color:${rv.length?'#3d2a00':'inherit'}"><div style="font-weight:700">${rv.length?'Needs review':'Data checks look complete'}</div>${rv.map(x=>`<div>• ${esc(x.t)} <span class="src" style="color:inherit;opacity:.7">(${x.who==='team'?'team':'Lucki'})</span></div>`).join('')}<div class="stages"><button id="rv-btn" aria-pressed="${!!p.review}">${p.review?'Clear my flag':'Flag for review'}</button></div><label for="rv-note" class="src" ${p.review?'':'hidden'} id="rv-l">What looks wrong?</label><textarea id="rv-note" ${p.review?'':'hidden'} placeholder="e.g. the photo shows a school building the map missed">${esc(p.review_note||'')}</textarea></div>`})()}
+    <div class="track"><div style="font-weight:700">My list</div><div class="stages" role="group" aria-label="Stage">${STAGES.map(([k,l])=>`<button data-stage="${k}" aria-pressed="${p.stage===k}">${l}</button>`).join('')}</div>
+      <label for="note" class="src">Notes</label><textarea id="note" placeholder="Who you talked to, what they said, next step">${esc(p.note||'')}</textarea><div class="saved" id="savedmsg">${p.updated?'Last change '+new Date(p.updated).toLocaleString():''}${store==='shared'?' · shared list':' · this browser only'}</div></div>
+    <button class="primary" id="draft">Draft the first call</button><button id="stop" hidden>Stop</button><div class="fine">Claude writes a call script, a text and an email to the owner’s office. Nothing is sent.</div><div id="drafts" style="display:grid;gap:10px"></div>
+    ${q('Is housing allowed here?',{religious_use:'Maybe · SB 4',housing_element_site:'Yes · city listed it',vacant:'Maybe · SB 9 / 684',surplus_land_notice:'Maybe · public land',conversion:'Maybe · condo map'}[kindKey(c)],kindKey(c)==='housing_element_site'?'pass':'warn',lawBody)}
+    ${q('Is it safe to build?',h?h+' to check':'3 of 3 clear',h?'warn':'pass',safeBody)}
+    ${c.sources.includes('conversion')?q('Does it pencil?',g.t,g.k,fundBody):`<details class="q" id="penq"><summary><span class="qq">Does it pencil?</span><span class="ans ${g.k}" id="pen-ans">${g.t}</span></summary><div class="body" id="pen"></div></details>`}
+    ${q('Who owns it?',who.a,who.k,whoBody)}
+    ${q('Why is it ranked here?','#'+c.rank+' in OC','unknown',why)}
+  </div></div>`;
+  d.scrollTop=0;
+  $('#close').onclick=closeSite;
+  $('#dheart').onclick=()=>{setPipe(c.apn,{stage:p.stage?'none':'saved'}).then(()=>renderDrawer(c)); if(tab==='explore')renderExplore();};
+  $$('[data-stage]').forEach(b=>b.onclick=()=>{setPipe(c.apn,{stage:p.stage===b.dataset.stage?'none':b.dataset.stage,note:$('#note').value}).then(()=>{renderDrawer(c); tab==='list'?renderList():null});});
+  $('#rv-btn').onclick=()=>{const on=!(PIPE[c.apn]||{}).review; setPipe(c.apn,{stage:(PIPE[c.apn]||{}).stage||'saved',review:on,review_note:on?((PIPE[c.apn]||{}).review_note||''):''}).then(()=>{renderDrawer(c); if(tab==='list')renderList(); if(on) setTimeout(()=>$('#rv-note')&&$('#rv-note').focus(),50)});};
+  let rt; $('#rv-note').oninput=()=>{clearTimeout(rt); rt=setTimeout(()=>setPipe(c.apn,{stage:(PIPE[c.apn]||{}).stage||'saved',review:true,review_note:$('#rv-note').value}),700)};
+  let t; $('#note').oninput=()=>{clearTimeout(t); t=setTimeout(()=>{setPipe(c.apn,{stage:(PIPE[c.apn]||{}).stage||'saved',note:$('#note').value}); $('#savedmsg').textContent='Saved '+new Date().toLocaleTimeString()},700)};
+  if(!c.sources.includes('conversion')) wirePencil(c);
+  wireDraft(c); drawMarkers();
+}
+function wirePencil(c){
+  const box=$('#pen'); const st={homes:Math.max(1,c.homes||1),land:landDefault(c),rate:0,fam:'low'};
+  const maxH=Math.max(60,Math.ceil((c.open_acres??c.acres??1)*60));
+  const seg=(name,opts)=>`<div class="stages" role="group" aria-label="${name}">${opts.map(([v,l])=>`<button data-k="${name}" data-v="${v}" aria-pressed="${String(st[name])===String(v)}">${l}</button>`).join('')}</div>`;
+  function draw(){ const p=pro(c,st); const pc=(n)=>Math.round(100*n/Math.max(p.cost,1));
+    box.innerHTML=`<div><b>Homes on this site</b> <span class="src">(Lucki’s estimate: ${c.homes??'unknown'})</span></div>
+    <div style="display:flex;gap:10px;align-items:center"><input id="pen-h" type="range" min="1" max="${maxH}" value="${st.homes}" style="flex:1"><b style="min-width:3ch;text-align:right">${st.homes}</b></div>
+    <div><b>Land</b></div>${seg('land',[['donated','Donated or $1 lease'],['market','Bought at market']])}
+    <div><b>Mortgage rate</b></div>${seg('rate',[['0','0% (Habitat-style)'],['0.03','3%'],['0.06625','Today 6.6%']])}
+    <div><b>Families</b></div>${seg('fam',[['low','Low income $93k'],['mix','Mix'],['moderate','Moderate $149k']])}
+    <div style="display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-variant-numeric:tabular-nums;margin-top:6px">
+      <span>Build a home</span><span>${fmt(p.build)}</span><span>Design, permits, finance</span><span>${fmt(p.soft)}</span><span>City fees</span><span>${fmt(p.fees)}</span>
+      <span>Land, per home</span><span>${p.land==='donated'?'$0':fmt(p.landPer)}</span><span><b>Cost per home</b></span><span><b>${fmt(p.cost)}</b></span>
+      <span>Family can pay</span><span>− ${fmt(p.pay)}</span><span>City help</span><span>− ${fmt(p.help)}</span>
+      <span><b>${p.gap<=0?'Left over per home':'Gap per home'}</b></span><span class="ans ${p.gap<=0?'pass':p.gap<100000?'warn':'fail'}">${fmt(Math.abs(p.gap))}</span>
+      <span>${p.gap<=0?'Left over, whole site':'Gap, whole site'}</span><span>${fmt(Math.abs(p.total))}</span></div>
+    <div class="bar" style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-top:4px" aria-hidden="true"><i style="width:${pc(p.build)}%;background:var(--accent)"></i><i style="width:${pc(p.soft+p.fees)}%;background:var(--warn)"></i><i style="width:${pc(p.landPer)}%;background:var(--fail)"></i></div>
+    <div class="fine">${p.land==='market'?`Land: ${siteSqft(c).toLocaleString()} sq ft of ${c.open_acres!=null?'open ':''}land × $125/sq ft = ${fmt(p.landTotal)}, split across ${p.homes} home${p.homes===1?'':'s'}. More homes shrink this line.`:'With the land donated or leased for $1, more homes don’t change the cost per home; they change how many families it helps.'}</div>
+    <div class="src">Building $334/sq ft and fees $40,000/home: Terner Center, “Making Missing Middle Pencil”, June 2024 (Los Angeles, 2023 dollars). Land $125/sq ft: same report, LA; no Orange County figure found, ASSUMPTION. Design, permits and financing at 20% of building cost: ASSUMPTION. 1,000 sq ft home. What a family can pay: 30% of income covers the loan, 1.1% tax, $350 HOA and $120 insurance; incomes from HCD’s 2026 Orange County limits. Prototype, not financial advice.</div>`;
+    $('#pen-ans').textContent=p.gap<=0?'Pencils':fmt(p.gap)+' short/home'; $('#pen-ans').className='ans '+(p.gap<=0?'pass':p.gap<100000?'warn':'fail');
+    $('#pen-h').oninput=e=>{st.homes=+e.target.value;draw()};
+    box.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.k==='rate'?+b.dataset.v:b.dataset.v;draw()});
+  }
+  draw();
+}
+async function wireDraft(c){
+  const btn=$('#draft'), stop=$('#stop'), out=$('#drafts');
+  const sample=(window.claude&&window.claude.use)?await window.claude.use('sample').catch(()=>null):null;
+  if(!sample){btn.disabled=true;btn.textContent='Open in Claude to draft';return}
+  let ctl; stop.onclick=()=>ctl&&ctl.abort();
+  btn.onclick=async()=>{ctl=new AbortController();btn.disabled=true;stop.hidden=false;out.innerHTML='<div class="fine">Thinking…</div>';
+    const facts={site:name(c),city:c.city,parcel:c.apn,acres:c.acres,kind:KIND[kindKey(c)],laws:laws(c).map(l=>l.name),zoning:c.zoning_city_code,hazards:c.hazards,transit:c.hqta,opportunity:c.tcac_2021,fund:{typical_condo:c.fund.typical_condo_value,family_can_pay_today:c.fund.affordable_price_low_income_4p.fha_6625,family_can_pay_at_0:c.fund.affordable_price_low_income_4p.rate_0,city_program:c.fund.city_program},institution:c.worship?{name:c.worship.name,denomination:c.worship.denomination}:null,agency:c.noa_agency||null,my_notes:(PIPE[c.apn]||{}).note||null};
+    const prompt=`You draft outreach for a one-person acquisitions lead at a small nonprofit that builds affordable ownership homes in Orange County, California. Write to the ORGANIZATION'S OFFICE (a congregation, a public agency, or "the owner of record"), never to a named individual. Use only the facts below; where a fact is missing say "unknown" rather than inventing it. Name the law that may apply and say plainly that eligibility, ownership and hazards still have to be verified. Plain words, warm and short. These are drafts a human will edit and send; do not claim anything was sent.\nFacts (JSON): ${JSON.stringify(facts)}\nReply with only JSON: {"call":"a 6-line phone script","text":"one SMS under 320 characters","email":"an email under 170 words, subject line first"}`;
+    try{const r=await sample.json(prompt,{signal:ctl.signal,onText:({text})=>{out.innerHTML='<div class="fine">Writing…</div><div class="draft">'+esc(text.slice(-500))+'</div>'}});
+      out.innerHTML='<div class="badge">Drafts · not sent</div>'+['call','text','email'].map(k=>`<div><div class="src" style="display:flex;justify-content:space-between;align-items:center">${{call:'Call script',text:'Text message',email:'Email'}[k]} <button data-copy="${k}" style="min-height:34px">Copy</button></div><div class="draft" id="d-${k}">${esc(String(r[k]||'(none)'))}</div></div>`).join('');
+      $$('[data-copy]').forEach(b=>b.onclick=async()=>{const el=$('#d-'+b.dataset.copy);try{await navigator.clipboard.writeText(el.textContent);b.textContent='Copied'}catch(e){const s=getSelection(),rg=document.createRange();rg.selectNodeContents(el);s.removeAllRanges();s.addRange(rg);b.textContent='Selected'}});
+      if(!(PIPE[c.apn]||{}).stage) setPipe(c.apn,{stage:'research'}).then(()=>{$$('[data-stage]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.stage==='research'))});
+    }catch(e){out.innerHTML=`<div class="fine">${e.code==='cancelled'?'Stopped.':e.code==='not_granted'?'Claude isn’t allowed for this page in this view.':e.code==='rate_limited'?'Too many requests right now. Try again in a minute.':'Could not draft ('+esc(e.code||'error')+').'}</div>`}
+    finally{btn.disabled=false;stop.hidden=true}};
+}
+
+// ---------- wiring ----------
+function resetFilters(){$$('[data-kind]').forEach(i=>i.checked=true);['#f-safe','#f-transit','#f-pencil'].forEach(s=>$(s).checked=false);$('#f-size').value='0';update()}
+function fitCity(){const city=$('#city').value; const r=filtered(); if(city&&r.length){map.fitBounds(L.latLngBounds(r.map(c=>[c.centroid[1],c.centroid[0]])).pad(.1),{maxZoom:15})} else if(!city) map.setView([33.70,-117.84],10);}
+function update(){drawMarkers(); if(tab==='explore'&&!open) renderExplore();}
+$('#city').onchange=()=>{try{localStorage.setItem('lucki.city',$('#city').value)}catch(e){} closeSite(); fitCity(); update();};
+$$('[data-kind]').forEach(i=>i.onchange=update);
+['#f-safe','#f-transit','#f-pencil','#f-size','#sort','#f-move','#f-room','#f-review'].forEach(s=>$(s).onchange=update);
+$$('[data-layer]').forEach(i=>i.onchange=()=>toggleLayer(i.dataset.layer,i.checked));
+[['#b-kind','#p-kind'],['#b-more','#p-more'],['#b-layers','#p-layers']].forEach(([b,p])=>{$(b).onclick=e=>{e.stopPropagation(); const was=!$(p).hidden; $$('.pop').forEach(x=>x.hidden=true); $$('.pill>button').forEach(x=>x.setAttribute('aria-expanded','false')); if(!was){$(p).hidden=false;$(b).setAttribute('aria-expanded','true')}}; $(p).onclick=e=>e.stopPropagation();});
+document.addEventListener('click',()=>{$$('.pop').forEach(x=>x.hidden=true);$$('.pill>button').forEach(x=>x.setAttribute('aria-expanded','false'))});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#drawer').hidden)closeSite(); $$('.pop').forEach(x=>x.hidden=true)}});
+$('#t-explore').onclick=()=>setTab('explore'); $('#t-list').onclick=()=>setTab('list');
+let mt; map.on('moveend zoomend',()=>{clearTimeout(mt); mt=setTimeout(()=>{drawMarkers(); if(tab==='explore'&&!open&&$('#f-move').checked) renderExplore();},120)});
+try{const s=localStorage.getItem('lucki.city'); if(s&&cities.includes(s)) $('#city').value=s;}catch(e){}
+refreshCounts(); drawLegend(); fitCity(); update();
+})();
+</script>
