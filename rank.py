@@ -15,6 +15,8 @@ A = {
   "hazard_factor": 0.6,            # ASSUMPTION: a site in a flood, fire or liquefaction zone ranks as if it had 60% of its homes
   "no_pencil_factor": 0.7,         # ASSUMPTION: a site that does not pencil even at 0% ranks as if it had 70% of its homes
   "min_open_m2": 400,
+  "fit_cap_homes": 24,             # ASSUMPTION: a small nonprofit project is 6-12 homes (Habitat OC: W. Washington 6, Wellington 9, Fullerton 12); homes beyond 24 do not raise the rank
+  "fit_max_open_acres": 5,         # ASSUMPTION: lots up to 5 open acres rank ahead of bigger ones
   "conversion_units_per_acre": 43, # ASSUMPTION: 425 E. Wellington Ave, Santa Ana = 9 units on 0.21 acres (SCAG ACRES)              # ASSUMPTION: under ~400 m² of open land (about 4,300 sq ft) fits no new home
 }
 def lot_m2(c):
@@ -70,17 +72,20 @@ for c in C:
     haz = sum(1 for v in c["hazards"].values() if v != "none found")
     f = c["fund"]; pencils = f.get("gap_condo_at_0pct") is not None and f["gap_condo_at_0pct"] <= 0
     k = (A["hazard_factor"] if haz else 1) * (1 if pencils or f.get("gap_condo_at_0pct") is None else A["no_pencil_factor"])
-    c["rank_value"] = round((homes or 0) * k, 2)
+    c["rank_value"] = round(min(homes or 0, A["fit_cap_homes"]) * k, 2)
+    oa = c.get("open_acres") if c.get("open_acres") is not None else (c.get("acres") or 0)
+    c["fits_small"] = oa <= A["fit_max_open_acres"]
+    c["very_large"] = oa > 10
     c["rank_reason"] = {"homes": homes, "homes_how": how, "hazard_zones": haz, "pencils_at_0pct": pencils,
                         "factor": round(k, 2), "rank_value": c["rank_value"]}
 for c in C:
     if c.get("fail") or c.get("homes") == 0: c["geometry"] = None
-C.sort(key=lambda c: (c["rank_value"], c.get("open_acres") or 0, c["score"]), reverse=True)
+C.sort(key=lambda c: (c["fits_small"], c["rank_value"], c["hqta"] != "no", -(c.get("open_acres") or c.get("acres") or 0)), reverse=True)
 for i, c in enumerate(C): c["rank"] = i + 1
 D["meta"]["ranking"] = "v2: homes that fit × hazard factor × pencil factor (see assumptions)"
 D["meta"]["assumptions"]["homes"] = ("Homes that fit = the city's Housing Element capacity where listed; otherwise open (unroofed) land from the county building-footprint layer × 20 homes/acre (ASSUMPTION), "
     "church land using half its open land (ASSUMPTION), empty single-family lots capped at 4 (SB 9), other empty lots at 10 (SB 684). Under 400 m² open = 0.")
-D["meta"]["assumptions"]["rank"] = "Rank = homes × 0.6 if in a flood/fire/liquefaction zone × 0.7 if it does not pencil even at 0% (ASSUMPTIONS)."
+D["meta"]["assumptions"]["rank"] = "Rank (for a small nonprofit) = lots up to 5 open acres first, then min(homes, 24) × 0.6 if in a flood/fire/liquefaction zone × 0.7 if it does not pencil even at 0% (ASSUMPTIONS)."
 D["meta"]["assumption_values"] = A
 D["meta"]["total_homes"] = sum(c["homes"] or 0 for c in C)
 D["meta"]["sites_with_homes"] = sum(1 for c in C if (c["homes"] or 0) > 0)

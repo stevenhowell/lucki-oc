@@ -65,6 +65,9 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--soft)}
 .tag.review{background:#fde8cf;color:#8a4b00}
 .tag.pass{color:var(--pass)}.tag.warn{color:var(--warn)}.tag.fail{color:var(--fail)}.tag.unknown{color:var(--unknown)}.tag.stage{background:var(--accent);color:var(--accent-ink)}
+.howto{margin:0 16px 8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;font-size:13px}
+.howto ol{margin:4px 0 0;padding-left:18px;grid-column:1}
+.howto button{grid-column:2;grid-row:1/3;min-height:36px}
 .more{grid-column:1/-1;text-align:center;color:var(--muted);padding:8px}
 .empty{grid-column:1/-1;padding:24px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
 .drawer{position:absolute;inset:0;background:var(--panel);overflow:auto;z-index:5;display:flex;flex-direction:column}
@@ -151,9 +154,10 @@ textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8
     <div class="sidehead" id="sh-explore">
       <div style="min-width:0;flex:1"><h2 id="h-title">Orange County</h2><div class="sub" id="h-sub"></div></div>
       <label class="move"><input type="checkbox" id="f-move"> Only what's on the map</label>
-      <select id="sort" aria-label="Sort"><option value="best">Most homes</option><option value="size">Most open land</option><option value="gap">Smallest gap per home</option></select>
+      <select id="sort" aria-label="Sort"><option value="best">Best fit for a small nonprofit</option><option value="homes">Most homes</option><option value="size">Most open land</option><option value="gap">Smallest gap per home</option></select>
     </div>
     <div class="sidehead" id="sh-list" hidden><div style="flex:1"><h2>My list</h2><div class="sub" id="l-sub">Sites you saved, by where they stand.</div></div></div>
+    <div class="howto" id="howto"><b>How Lucki works</b><ol><li>Pick a city at the top.</li><li>Tap a site: read the summary, look at the photo, open “Does it pencil?”.</li><li>Tap ♡ to save it, then move it from Saved to Contacted on the site page.</li></ol><button id="howto-x" aria-label="Hide these tips">Got it</button></div>
     <div class="cards" id="cards"></div>
     <div class="drawer" id="drawer" hidden></div>
   </section>
@@ -197,8 +201,12 @@ function pro(c,o={}){
 }
 
 // ---------- data ----------
-const [D,AER,BASE]=await Promise.all([fetch('candidates.json').then(r=>r.json()),fetch('aerials.json').then(r=>r.json()).catch(()=>({})),fetch('base.json').then(r=>r.json()).catch(()=>[])]);
+$('#cards').innerHTML='<div class="empty"><b>Loading sites…</b><span>About 11,000 sites across Orange County.</span></div>';
+let D,AER,BASE;
+try{ [D,AER,BASE]=await Promise.all([fetch('candidates.json').then(r=>{if(!r.ok) throw new Error('candidates.json '+r.status); return r.json()}),fetch('aerials.json').then(r=>r.json()).catch(()=>({})),fetch('base.json').then(r=>r.json()).catch(()=>[])]); }
+catch(e){ $('#cards').innerHTML=`<div class="empty"><b>Sites didn’t load.</b><span>${String(e&&e.message||e)}. Reload the page; if it keeps happening, the data file may still be publishing.</span><button onclick="location.reload()">Reload</button></div>`; return; }
 const C=D.candidates; const byApn=new Map(C.map(c=>[c.apn,c]));
+fetch('outlines.json').then(r=>r.ok?r.json():{}).then(o=>{for(const [a,g] of Object.entries(o)){const c=byApn.get(a); if(c) c.geometry=g;} if(typeof drawMarkers==='function') drawMarkers(); if(open) renderDrawer(open);}).catch(()=>{});
 const cities=[...new Set(C.map(c=>c.city).filter(Boolean))].sort();
 for(const c of cities){const o=document.createElement('option');o.value=c;o.textContent=c;$('#city').append(o)}
 
@@ -259,6 +267,7 @@ function reviews(c){const r=[]; const p=PIPE[c.apn]||{};
   if(c.roof_check==='thin') r.push({who:'lucki',t:`The county’s building map shows only ${c.n_buildings} building${c.n_buildings===1?'':'s'} on this lot; open land and homes may be too high`});
   if(c.sources.length===1&&c.sources[0]==='vacant'&&c.n_buildings==null) r.push({who:'lucki',t:'Tagged empty in land-use data but not checked for buildings (county server stopped answering)'});
   if(c.homes==null) r.push({who:'lucki',t:'Open land not measured, so homes are unknown'});
+  if(c.very_large) r.push({who:'lucki',t:'Very large parcel: it may be a campus, a park or a parcel that crosses a road; check the photo'});
   if(c.sources.includes('surplus_land_notice')&&/archive/i.test(c.noa_status||'')) r.push({who:'lucki',t:'The surplus-land notice is archived; the agency may no longer offer it'});
   return r;}
 function pencils(c){return c.sources.includes('conversion')?(c.fund.gap_condo_at_0pct!=null&&c.fund.gap_condo_at_0pct<=0):pro(c).gap<=0}
@@ -266,6 +275,7 @@ function filtered(){
   const city=$('#city').value, ks=kinds(), safe=$('#f-safe').checked, tr=$('#f-transit').checked, pc=$('#f-pencil').checked, sz=+$('#f-size').value;
   let r=C.filter(c=>(!city||c.city===city)&&c.sources.some(s=>ks.includes(s))&&(!safe||haz(c)===0)&&(!tr||c.hqta!=='no')&&(!pc||pencils(c))&&((c.open_acres??c.acres)||0)>=sz&&(!$('#f-room').checked||c.homes==null||c.homes>0)&&(!$('#f-review').checked||!reviews(c).length));
   const s=$('#sort').value;
+  if(s==='homes') r=[...r].sort((a,b)=>(b.homes||0)-(a.homes||0));
   if(s==='size') r=[...r].sort((a,b)=>((b.open_acres??b.acres)||0)-((a.open_acres??a.acres)||0));
   if(s==='gap') r=[...r].sort((a,b)=>(a.sources.includes('conversion')?(a.fund.gap_condo_at_0pct??1e9):pro(a).gap)-(b.sources.includes('conversion')?(b.fund.gap_condo_at_0pct??1e9):pro(b).gap));
   const NK=$$('[data-kind]').length; const n=(ks.length<NK?1:0)+(safe?1:0)+(tr?1:0)+(pc?1:0)+(sz?1:0);
@@ -436,7 +446,8 @@ document.addEventListener('click',()=>{$$('.pop').forEach(x=>x.hidden=true);$$('
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#drawer').hidden)closeSite(); $$('.pop').forEach(x=>x.hidden=true)}});
 $('#t-explore').onclick=()=>setTab('explore'); $('#t-list').onclick=()=>setTab('list');
 let mt; map.on('moveend zoomend',()=>{clearTimeout(mt); mt=setTimeout(()=>{drawMarkers(); if(tab==='explore'&&!open&&$('#f-move').checked) renderExplore();},120)});
-try{const s=localStorage.getItem('lucki.city'); if(s&&cities.includes(s)) $('#city').value=s;}catch(e){}
+try{const s=localStorage.getItem('lucki.city'); if(s&&cities.includes(s)) $('#city').value=s; if(localStorage.getItem('lucki.howto')==='hide') $('#howto').hidden=true;}catch(e){}
+$('#howto-x').onclick=()=>{$('#howto').hidden=true; try{localStorage.setItem('lucki.howto','hide')}catch(e){}};
 refreshCounts(); drawLegend(); fitCity(); update();
 })();
 </script>

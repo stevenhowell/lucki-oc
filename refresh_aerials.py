@@ -7,6 +7,8 @@ from pathlib import Path
 B = Path(__file__).parent; S = B/"site"; A = S/"aerials"
 MAX = 470
 C = json.load(open(S/"candidates.json"))["candidates"]; byapn = {c["apn"]: c for c in C}
+OUT = json.load(open(S/"outlines.json"))
+for c in C: c["geometry"] = OUT.get(c["apn"])
 AER = json.load(open(S/"aerials.json"))
 R = 20037508.34
 def merc(lon, lat): return lon*R/180, math.log(math.tan((90+lat)*math.pi/360))/(math.pi/180)*R/180
@@ -33,7 +35,8 @@ picks.append("39802812")
 picks = list(dict.fromkeys(a for a in picks if a in byapn))
 keep_old = [a for a in AER if a in byapn and (byapn[a]["rank"] <= 1500 or a in picks)]
 dropped = [a for a in AER if a not in keep_old]
-need = [a for a in picks if a not in AER]
+refr = [a for a in keep_old if a in OUT and (AER[a]["bbox3857"][2]-AER[a]["bbox3857"][0]) < 200]
+need = [a for a in picks if a not in AER] + refr
 room = MAX - len(keep_old)
 if room < len(need):  # drop the lowest-ranked old photos that are not picks
     extra = sorted([a for a in keep_old if a not in picks], key=lambda a: -byapn[a]["rank"])[:len(need)-room]
@@ -54,5 +57,6 @@ for i, a in enumerate(need):
         if fails >= 5: print("county server failing; stopping", flush=True); break
     time.sleep(0.3)
     if i % 20 == 0: print(i, "rendered", flush=True)
+for c in C: c.pop("geometry", None)
 json.dump(NEW, open(S/"aerials.json", "w")); json.dump(dropped, open(B/"cache"/"aerials_dropped.json", "w"))
 print("aerials now", len(NEW), "dropped", len(dropped), "fails", fails, flush=True)
