@@ -7,7 +7,8 @@
   "contact_form": "https://wintersburg.churchcenter.com/people/forms/267322",
   "website": "https://wintersburg.org",
   "source_url": "https://wintersburg.org/about-us",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "2000 N Fairview St, Santa Ana, CA 92706"
  },
  "18804106": {
   "organization": "Our Lady of La Vang Catholic Church",
@@ -17,7 +18,8 @@
   "contact_form": "https://ourladyoflavang.org/muc-vu-gx/lien-he-voi-giao-xu/",
   "website": "https://ourladyoflavang.org",
   "source_url": "https://ourladyoflavang.org",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "288 S Harbor Blvd, Santa Ana, CA 92704"
  },
  "01308434": {
   "organization": "Orange Canaan Presbyterian Church (also listed as Wilshire Presbyterian Church)",
@@ -27,7 +29,8 @@
   "contact_form": null,
   "website": null,
   "source_url": "https://christianity.com/church-directory/california/santa-ana/presbyterian",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "940 W Wilshire Ave, Santa Ana, CA 92707"
  },
  "85604121": {
   "organization": "Trabuco Canyon Community Church",
@@ -37,7 +40,8 @@
   "contact_form": null,
   "website": "https://trabucochurch.org",
   "source_url": "https://trabucochurch.org/contact",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "30121 Canyon Creek Dr, Trabuco Canyon"
  },
  "85604149": {
   "organization": "Trabuco Canyon Community Church",
@@ -47,7 +51,8 @@
   "contact_form": null,
   "website": "https://trabucochurch.org",
   "source_url": "https://trabucochurch.org/contact",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "30121 Canyon Creek Dr, Trabuco Canyon"
  },
  "09712324": {
   "organization": "Vietnamese Alliance Church (Hội Thánh Tin Lành Việt Nam)",
@@ -57,7 +62,8 @@
   "contact_form": null,
   "website": "https://www.hoithanhmidway.org/",
   "source_url": "https://www.hoithanhmidway.org/",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "8141 Washington Ave, Midway City"
  },
  "09712306": {
   "organization": "Vietnamese Alliance Church (Hội Thánh Tin Lành Việt Nam)",
@@ -67,7 +73,8 @@
   "contact_form": null,
   "website": "https://www.hoithanhmidway.org/",
   "source_url": "https://www.hoithanhmidway.org/",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "8141 Washington Ave, Midway City"
  },
  "09712307": {
   "organization": "Vietnamese Alliance Church (Hội Thánh Tin Lành Việt Nam)",
@@ -77,7 +84,8 @@
   "contact_form": null,
   "website": "https://www.hoithanhmidway.org/",
   "source_url": "https://www.hoithanhmidway.org/",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "8141 Washington Ave, Midway City"
  },
  "38306109": {
   "organization": "La Purisima Catholic Church",
@@ -87,7 +95,8 @@
   "contact_form": null,
   "website": "http://lapurisima.net",
   "source_url": "https://catholicmasstime.org/church/la-purisima-catholic-church/2163/",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "11712 N Hewes St, Orange"
  },
  "39540102": {
   "organization": "Trinity United Presbyterian Church",
@@ -97,7 +106,8 @@
   "contact_form": null,
   "website": null,
   "source_url": "https://churchstaffing.com/church/185567/trinity-united-presbyterian-church",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "13922 Prospect Ave, Santa Ana (North Tustin)"
  },
  "09712322": {
   "organization": "Friends Community Church",
@@ -107,7 +117,8 @@
   "contact_form": null,
   "website": null,
   "source_url": "https://churcheslist.com/friends-community-church-8",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "14762 Jackson St, Midway City"
  },
  "39515130": {
   "organization": "Church of the Foothills",
@@ -117,7 +128,8 @@
   "contact_form": null,
   "website": "https://churchofthefoothills.churchcenter.com",
   "source_url": "https://churchofthefoothills.churchcenter.com/home",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "19211 Dodge Ave, Santa Ana (North Tustin)"
  },
  "85608112": {
   "organization": "St. Michael's Abbey (moved to Silverado Canyon in 2021; this is the old campus)",
@@ -127,7 +139,8 @@
   "contact_form": null,
   "website": "https://stmichaelsabbey.com",
   "source_url": "https://stmichaelsabbey.com/contact-us/",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "19292 El Toro Rd, Silverado"
  },
  "85601123": {
   "organization": "St. Michael's Abbey (moved to Silverado Canyon in 2021; this is the old campus)",
@@ -137,7 +150,8 @@
   "contact_form": null,
   "website": "https://stmichaelsabbey.com",
   "source_url": "https://stmichaelsabbey.com/contact-us/",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "19292 El Toro Rd, Silverado"
  },
  "85604147": {
   "organization": "Trabuco Canyon Community Church",
@@ -147,7 +161,8 @@
   "contact_form": null,
   "website": "https://trabucochurch.org",
   "source_url": "https://trabucochurch.org/contact",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "30121 Canyon Creek Dr, Trabuco Canyon"
  },
  "85604145": {
   "organization": "Trabuco Canyon Community Church",
@@ -157,7 +172,8 @@
   "contact_form": null,
   "website": "https://trabucochurch.org",
   "source_url": "https://trabucochurch.org/contact",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "30121 Canyon Creek Dr, Trabuco Canyon"
  },
  "40131120": {
   "organization": "Unity of Tustin",
@@ -167,7 +183,8 @@
   "contact_form": null,
   "website": "https://www.unitytustin.org",
   "source_url": "https://www.meetup.com/unity-of-tustin-church-meditation-gardens/",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "14402 Prospect Ave, Tustin"
  },
  "50107210": {
   "organization": "St. Paul's Episcopal Church",
@@ -177,7 +194,8 @@
   "contact_form": null,
   "website": "https://stpauls.org",
   "source_url": "https://ebiblestories.com/church/listing_34918.shtml",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "1221 Wass St, Tustin"
  },
  "50107209": {
   "organization": "St. Paul's Episcopal Church",
@@ -187,7 +205,8 @@
   "contact_form": null,
   "website": "https://stpauls.org",
   "source_url": "https://ebiblestories.com/church/listing_34918.shtml",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "1221 Wass St, Tustin"
  },
  "12757225": {
   "organization": "Sacred Heart Mission (St. Justin Martyr parish)",
@@ -197,7 +216,8 @@
   "contact_form": null,
   "website": null,
   "source_url": "https://dioceseofocstg.wpengine.com/directories/parishes/saint-justin-martyr-catholic-church",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "10852 Harcourt Ave, Anaheim"
  },
  "12757332": {
   "organization": "Sacred Heart Mission (St. Justin Martyr parish)",
@@ -207,7 +227,8 @@
   "contact_form": null,
   "website": null,
   "source_url": "https://dioceseofocstg.wpengine.com/directories/parishes/saint-justin-martyr-catholic-church",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "10852 Harcourt Ave, Anaheim"
  },
  "61604101": {
   "organization": "Lutheran Church of the Cross",
@@ -217,7 +238,8 @@
   "contact_form": null,
   "website": "https://lcotc.org",
   "source_url": "https://www.bibletimes.app/find-a-church/us/california/lake-forest/lutheran-church-of-the-cross",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "24231 El Toro Rd, Laguna Woods"
  },
  "39619144": {
   "organization": "Orange County Classical Academy, tenant on this church campus (ask who owns it)",
@@ -227,7 +249,8 @@
   "contact_form": null,
   "website": "https://orangecountyclassicalacademy.org",
   "source_url": "https://orangecountyclassicalacademy.org/?p=1045",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "2130 N Grand Ave, Santa Ana"
  },
  "39803118": {
   "organization": "City of Santa Ana Housing Division (units here are individually owned condos; the city ran the Wellington condo purchase)",
@@ -237,7 +260,8 @@
   "contact_form": null,
   "website": "https://www.santa-ana.org/housing-division",
   "source_url": "https://www.santa-ana.org/housing-division",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "919 N Minter St, Santa Ana"
  },
  "39803119": {
   "organization": "City of Santa Ana Housing Division (units here are individually owned condos; the city ran the Wellington condo purchase)",
@@ -247,7 +271,8 @@
   "contact_form": null,
   "website": "https://www.santa-ana.org/housing-division",
   "source_url": "https://www.santa-ana.org/housing-division",
-  "confidence": "high"
+  "confidence": "high",
+  "site_address": "1001 French St, Santa Ana"
  },
  "33905221": {
   "organization": "City of Placentia Planning Division (city-approved housing site; church on the lot not confirmed)",
@@ -257,6 +282,7 @@
   "contact_form": null,
   "website": "https://www.placentia.org",
   "source_url": "https://www.noticeregistry.com/california/notice/public-hearing-placentia-960805",
-  "confidence": "medium"
+  "confidence": "medium",
+  "site_address": "121 Alta St, Placentia"
  }
 }
