@@ -228,5 +228,35 @@
   "website": "https://orangecountyclassicalacademy.org",
   "source_url": "https://orangecountyclassicalacademy.org/?p=1045",
   "confidence": "medium"
+ },
+ "39803118": {
+  "organization": "City of Santa Ana Housing Division (units here are individually owned condos; the city ran the Wellington condo purchase)",
+  "address": "20 Civic Center Plaza, M-26, Santa Ana",
+  "phone": "(714) 667-2250",
+  "email": null,
+  "contact_form": null,
+  "website": "https://www.santa-ana.org/housing-division",
+  "source_url": "https://www.santa-ana.org/housing-division",
+  "confidence": "high"
+ },
+ "39803119": {
+  "organization": "City of Santa Ana Housing Division (units here are individually owned condos; the city ran the Wellington condo purchase)",
+  "address": "20 Civic Center Plaza, M-26, Santa Ana",
+  "phone": "(714) 667-2250",
+  "email": null,
+  "contact_form": null,
+  "website": "https://www.santa-ana.org/housing-division",
+  "source_url": "https://www.santa-ana.org/housing-division",
+  "confidence": "high"
+ },
+ "33905221": {
+  "organization": "City of Placentia Planning Division (city-approved housing site; church on the lot not confirmed)",
+  "address": "401 E Chapman Ave, Placentia",
+  "phone": "(714) 993-8124",
+  "email": null,
+  "contact_form": null,
+  "website": "https://www.placentia.org",
+  "source_url": "https://www.noticeregistry.com/california/notice/public-hearing-placentia-960805",
+  "confidence": "medium"
  }
 }
