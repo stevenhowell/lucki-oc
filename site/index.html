@@ -792,12 +792,13 @@ textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8
 .foot{font-size:11px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--line);background:var(--panel)}
 .leaflet-container{font:inherit;background:#2a2d29}
 .leaflet-tooltip{font:12px var(--body)}
-@media (max-width:900px){body{overflow:auto}.main{grid-template-columns:1fr;grid-template-rows:46vh auto}.side{border-left:0;border-top:1px solid var(--line);min-height:70vh}.search{min-width:0;flex:1}}
+@media (max-width:900px){html,body{height:auto}body{overflow:auto}.main{flex:none}.cards{overflow:visible}.drawer{position:static}.main{grid-template-columns:1fr;grid-template-rows:46vh auto}.side{border-left:0;border-top:1px solid var(--line);min-height:70vh}.search{min-width:0;flex:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <header class="bar">
   <span class="brand" title="Land Utilized for Community Kindness Information">Lucki</span><span class="tagline">Land Utilized for Community Kindness Information</span>
+  <input id="q" class="search" type="search" placeholder="Search a name, street or parcel" aria-label="Search sites" style="min-width:220px">
   <select id="city" class="search" aria-label="City"><option value="">All of Orange County</option></select>
   <div class="pill"><button id="b-kind" aria-expanded="false">Kind of land <span class="count" id="c-kind"></span></button>
     <div class="pop" id="p-kind" hidden>
@@ -831,7 +832,7 @@ textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8
 </header>
 
 <div class="main">
-  <div class="mapwrap"><div id="static" class="static" aria-label="Aerial photo with the top sites"></div><div id="map" hidden aria-label="Interactive map of candidate sites"></div><div class="zoomctl" role="group" aria-label="Zoom"><button id="z-in" aria-label="Zoom in">+</button><button id="z-out" aria-label="Zoom out">−</button></div><div class="slegend" id="slegend"></div></div>
+  <div class="mapwrap"><div id="static" class="static" aria-label="Aerial photo with the top sites"></div><div id="map" hidden aria-label="Interactive map of candidate sites"></div><div class="zoomctl" role="group" aria-label="Zoom"><button id="z-in" aria-label="Zoom in">+</button><button id="z-out" aria-label="Zoom out">−</button></div><div class="slegend" id="slegend"></div><button id="view-btn" class="maptoggle" aria-pressed="false">2D map</button></div>
   <section class="side">
     <div class="sidehead" id="sh-explore">
       <div style="min-width:0;flex:1"><h2 id="h-title">Orange County</h2><div class="sub" id="h-sub"></div></div>
@@ -950,14 +951,15 @@ function drawLegend(){const on=$$('[data-layer]').filter(i=>i.checked);$('#c-lay
 
 // ---------- still aerial (default) ----------
 const merc=(lon,lat)=>[lon*R/180, Math.log(Math.tan((90+lat)*Math.PI/360))/(Math.PI/180)*R/180];
-let ZS=1, TX=0, TY=0; const STATIC_LAYERS={}; const LAYER_DATA={};
+let VIEW='sat'; let ZS=1, TX=0, TY=0; const STATIC_LAYERS={}; const LAYER_DATA={};
 function applyZoom(){const f=$('#static .frame'); if(!f) return; const box=$('#static').getBoundingClientRect(), fr=f.getBoundingClientRect(); f.style.transform=`translate(${TX}px,${TY}px) scale(${ZS})`; $('#z-out').disabled=ZS<=1; $('#z-in').disabled=ZS>=8;
   f.querySelectorAll('circle').forEach(c=>{const r0=+c.dataset.r; if(r0) c.setAttribute('r',(r0/Math.sqrt(ZS)).toFixed(1))}); f.querySelectorAll('text').forEach(t=>{const s0=+t.dataset.s; if(s0) t.setAttribute('font-size',(s0/Math.sqrt(ZS)).toFixed(1))});}
 function zoomBy(k,cx,cy){const box=$('#static').getBoundingClientRect(); const f=$('#static .frame'); if(!f) return; const fx=cx??box.width/2, fy=cy??box.height/2;
   const nz=Math.min(8,Math.max(1,ZS*k)); const ox=f.offsetLeft, oy=f.offsetTop; const px=(fx-ox-TX)/ZS, py=(fy-oy-TY)/ZS; ZS=nz; TX=fx-ox-px*ZS; TY=fy-oy-py*ZS; if(ZS===1){TX=0;TY=0} applyZoom();}
 function drawStatic(){
   const box=$('#static'); if(!box||interactive) return;
-  const city=$('#city').value; const V=(city&&CITYV[city])?{...CITYV[city],img:CITYV[city].file,label:city+', 2025 aerial'}:OV?{...OV,img:'overview.jpg',label:'Orange County, 2025 aerial'}:null;
+  const city=$('#city').value; const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); const two=VIEW==='2d';
+  const V=(city&&CITYV[city])?{...CITYV[city],img:two?'map2d/'+slug(city)+'.png':CITYV[city].file,label:city+(two?', street map':', 2025 aerial')}:OV?{...OV,img:two?'map2d/overview.png':'overview.jpg',label:'Orange County'+(two?', street map':', 2025 aerial')}:null;
   if(!V){box.innerHTML='<div class="note">Photo not available. Use the interactive map.</div>';return}
   const rows=(typeof filtered==='function')?filtered():C; const top=rows.slice(0,10);
   const px=c=>{const [x,y]=merc(c.centroid[0],c.centroid[1]);return [(x-V.bbox3857[0])/(V.bbox3857[2]-V.bbox3857[0])*V.w,(V.bbox3857[3]-y)/(V.bbox3857[3]-V.bbox3857[1])*V.h]};
@@ -981,7 +983,9 @@ function setInteractive(on){
   if(on){ loadBase(); setTimeout(()=>{map.invalidateSize(); if(open) map.setView([open.centroid[1],open.centroid[0]],17); else fitCity(); drawMarkers(); if(tab==='explore'&&!open) renderExplore();},60); }
   else { drawStatic(); if(tab==='explore'&&!open) renderExplore(); }
 }
-window.lucki={open:a=>{const c=byApn.get(a); if(c) openSite(c); return !!c}}; $('#z-in').onclick=()=>zoomBy(2); $('#z-out').onclick=()=>zoomBy(.5);
+window.lucki={open:a=>{const c=byApn.get(a); if(c) openSite(c); return !!c}}; let qt; $('#q').oninput=e=>{clearTimeout(qt); qt=setTimeout(()=>{QS=e.target.value.trim().toLowerCase(); closeSite(); update();},250)};
+$('#view-btn').onclick=()=>{VIEW=VIEW==='sat'?'2d':'sat'; $('#view-btn').textContent=VIEW==='sat'?'2D map':'Satellite'; $('#view-btn').setAttribute('aria-pressed',VIEW==='2d'); drawStatic();};
+$('#z-in').onclick=()=>zoomBy(2); $('#z-out').onclick=()=>zoomBy(.5);
 let dragMoved=false;
 (()=>{const el=$('#static'); let sx,sy,tx0,ty0,down=false;
   el.addEventListener('pointerdown',e=>{if(ZS<=1) return; down=true; dragMoved=false; sx=e.clientX; sy=e.clientY; tx0=TX; ty0=TY; el.classList.add('dragging')});
@@ -991,7 +995,7 @@ let dragMoved=false;
 })();
 
 // ---------- filters ----------
-let tab='explore', open=null, shown=0, rows=[];
+let tab='explore', open=null, shown=0, rows=[]; let QS='';
 const kinds=()=>$$('[data-kind]').filter(i=>i.checked).map(i=>i.dataset.kind);
 function haz(c){return Object.values(c.hazards).filter(v=>v!=='none found').length}
 function reviews(c){const r=[]; const p=PIPE[c.apn]||{};
@@ -1005,7 +1009,7 @@ function reviews(c){const r=[]; const p=PIPE[c.apn]||{};
 function pencils(c){return c.sources.includes('conversion')?(c.fund.gap_condo_at_0pct!=null&&c.fund.gap_condo_at_0pct<=0):pro(c).gap<=0}
 function filtered(){
   const city=$('#city').value, ks=kinds(), safe=$('#f-safe').checked, tr=$('#f-transit').checked, pc=$('#f-pencil').checked, sz=+$('#f-size').value;
-  let r=C.filter(c=>(!city||c.city===city)&&c.sources.some(s=>ks.includes(s))&&(!safe||haz(c)===0)&&(!tr||c.hqta!=='no')&&(!pc||pencils(c))&&((c.open_acres??c.acres)||0)>=sz&&(!$('#f-room').checked||c.homes==null||c.homes>0)&&(!$('#f-review').checked||!reviews(c).length));
+  let r=C.filter(c=>(!city||c.city===city)&&c.sources.some(s=>ks.includes(s))&&(!safe||haz(c)===0)&&(!tr||c.hqta!=='no')&&(!pc||pencils(c))&&((c.open_acres??c.acres)||0)>=sz&&(!$('#f-room').checked||c.homes==null||c.homes>0)&&(!$('#f-review').checked||!reviews(c).length)&&(!QS||((name(c)+' '+(c.noa_address||'')+' '+c.apn+' '+c.city+' '+((c.worship||{}).name||'')).toLowerCase().includes(QS))));
   const s=$('#sort').value;
   if(s==='homes') r=[...r].sort((a,b)=>(b.homes||0)-(a.homes||0));
   if(s==='size') r=[...r].sort((a,b)=>((b.open_acres??b.acres)||0)-((a.open_acres??a.acres)||0));
