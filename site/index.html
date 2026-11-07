@@ -700,7 +700,8 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 .tabs{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
 .tabs button{border:0;border-radius:0;min-height:38px}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--panel)}
-.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,1fr)}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,1fr);grid-template-rows:minmax(0,1fr)}
+.side{min-height:0}
 #map{min-height:300px;height:100%;background:#2a2d29}
 .mapwrap{position:relative;min-height:300px;background:#2a2d29;overflow:hidden}
 .mapwrap #map{position:absolute;inset:0}
@@ -744,6 +745,8 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--soft)}
 .tag.review{background:#fde8cf;color:#8a4b00}
 .tag.pass{color:var(--pass)}.tag.warn{color:var(--warn)}.tag.fail{color:var(--fail)}.tag.unknown{color:var(--unknown)}.tag.stage{background:var(--accent);color:var(--accent-ink)}
+.council{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px 12px;font-size:13px}
+.council summary{cursor:pointer;min-height:32px}
 .howto{margin:0 16px 8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;font-size:13px}
 .howto ol{margin:4px 0 0;padding-left:18px;grid-column:1}
 .howto button{grid-column:2;grid-row:1/3;min-height:36px}
@@ -864,7 +867,7 @@ const LAW={
 
 
 // ---------- pro forma (Terner Center 2024 + HCD 2026 + CalHFA; ASSUMPTIONS labelled) ----------
-const PRO={unit_sqft:1000,hard_psf:334,fees:40000,soft_pct:.20,land_psf:125,tax:.011,hoa:350,ins:120,share:.30};
+const PRO={market_psf:749,unit_sqft:1000,hard_psf:334,fees:40000,soft_pct:.20,land_psf:125,tax:.011,hoa:350,ins:120,share:.30};
 const INCOME={low:93050,moderate:148850,mix:(93050+148850)/2};
 function canPay(income,rate){const monthly=income*PRO.share/12; let lo=0,hi=3e6; for(let i=0;i<40;i++){const p=(lo+hi)/2,m=rate/12,pi=m?p*m/(1-Math.pow(1+m,-360)):p/360; if(pi+p*PRO.tax/12+PRO.hoa+PRO.ins>monthly) hi=p; else lo=p;} return Math.round(lo/1000)*1000;}
 function landDefault(c){return (c.sources.includes('religious_use')||c.sources.includes('surplus_land_notice'))?'donated':'market'}
@@ -879,12 +882,18 @@ function pro(c,o={}){
   return {homes,land,rate,fam,build,soft,fees,landTotal,landPer,cost,pay,help,gap,total:gap*homes};
 }
 
+const REAL={
+ '64403405':{name:'Neighborhood Congregational Church, 340 St. Ann’s Dr',tag:'Real SB 4 project',t:'This is a real SB 4 project. Neighborhood Congregational Church is leasing this parking lot for 29 affordable rental homes in a three-story building (developer: Related California). Laguna Beach committed about $6.71M: $2.5M from the state (HCD), a $2.5M city match and up to $740,000 in fee waivers. Three issues it ran into: neighbors objected, the plan was cut from 44 homes to 29, and the design-review exemptions for the church’s replacement buildings drew criticism. Lucki estimated about 9 ownership townhomes here; the real project fits about three times that as rentals, so Lucki’s numbers are on the low side.',src:'https://www.lagunabeachindy.com/news/city-commits-6-71m-in-funding-for-affordable-housing-project/article_f60c6735-3a80-42e6-a47d-164c19c713c1.html'},
+ '39802812':{name:'425 E. Wellington Ave',tag:'Habitat OC’s own deal',t:'This is Habitat OC’s own 2025 deal: an existing 9-unit apartment building becoming 9 ownership condos. Santa Ana reserved $920,000: $720,000 as down-payment help ($80,000 per home) and up to $200,000 for tenant relocation. Current tenants under 120% of median income get the first right to buy.',src:'City of Santa Ana pre-commitment letter A-2025-094, 2025-07-01'}
+};
 // ---------- data ----------
 $('#cards').innerHTML='<div class="empty"><b>Loading sites…</b><span>About 11,000 sites across Orange County.</span></div>';
 let D,AER,BASE; const OV=await fetch('overview.json').then(r=>r.ok?r.json():null).catch(()=>null); const CITYV=await fetch('cities.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
 try{ [D,AER,BASE]=await Promise.all([fetch('candidates.json').then(r=>{if(!r.ok) throw new Error('candidates.json '+r.status); return r.json()}),fetch('aerials.json').then(r=>r.json()).catch(()=>({})),fetch('base.json').then(r=>r.json()).catch(()=>[])]); }
 catch(e){ $('#cards').innerHTML=`<div class="empty"><b>Sites didn’t load.</b><span>${String(e&&e.message||e)}. Reload the page; if it keeps happening, the data file may still be publishing.</span><button onclick="location.reload()">Reload</button></div>`; return; }
 const C=D.candidates; const byApn=new Map(C.map(c=>[c.apn,c]));
+let COUNCIL={byCity:{},byApn:{}}; fetch('council.json').then(r=>r.ok?r.json():null).then(j=>{if(j){COUNCIL=j; if(tab==='explore'&&!open) renderExplore(); if(open) renderDrawer(open);}}).catch(()=>{});
+const recHtml=r=>`<div style="border-top:1px solid var(--line);padding-top:6px"><div><b>${esc(r.project||r.address||'Council item')}</b>${r.units?` · ${r.units} homes`:''}${r.tenure?` · ${esc(r.tenure)}`:''}</div><div class="src">${esc(r.date||'date unknown')} · ${esc(r.body||'')}${r.decision?' · '+esc(r.decision):''}${r.money?' · '+esc(r.money):''}</div>${r.summary?`<div>${esc(r.summary)}</div>`:''}${r.issues&&r.issues.length?`<div class="src">Issues raised: ${esc(r.issues.join(', '))}</div>`:''}${r.url?`<div class="src"><a href="${esc(r.url)}" target="_blank" rel="noopener">Read the record</a></div>`:''}</div>`;
 fetch('outlines.json').then(r=>r.ok?r.json():{}).then(o=>{for(const [a,g] of Object.entries(o)){const c=byApn.get(a); if(c) c.geometry=g;} if(typeof drawMarkers==='function') drawMarkers(); if(open) renderDrawer(open);}).catch(()=>{});
 const cities=[...new Set(C.map(c=>c.city).filter(Boolean))].sort();
 for(const c of cities){const o=document.createElement('option');o.value=c;o.textContent=c;$('#city').append(o)}
@@ -972,7 +981,7 @@ function setInteractive(on){
   if(on){ loadBase(); setTimeout(()=>{map.invalidateSize(); if(open) map.setView([open.centroid[1],open.centroid[0]],17); else fitCity(); drawMarkers(); if(tab==='explore'&&!open) renderExplore();},60); }
   else { drawStatic(); if(tab==='explore'&&!open) renderExplore(); }
 }
-$('#z-in').onclick=()=>zoomBy(2); $('#z-out').onclick=()=>zoomBy(.5);
+window.lucki={open:a=>{const c=byApn.get(a); if(c) openSite(c); return !!c}}; $('#z-in').onclick=()=>zoomBy(2); $('#z-out').onclick=()=>zoomBy(.5);
 let dragMoved=false;
 (()=>{const el=$('#static'); let sx,sy,tx0,ty0,down=false;
   el.addEventListener('pointerdown',e=>{if(ZS<=1) return; down=true; dragMoved=false; sx=e.clientX; sy=e.clientY; tx0=TX; ty0=TY; el.classList.add('dragging')});
@@ -1027,13 +1036,13 @@ function drawMarkers(){
 
 // ---------- cards ----------
 function kindKey(c){return c.sources.includes('housing_element_site')?'housing_element_site':c.sources[0]}
-function name(c){return c.worship&&c.worship.name?c.worship.name:c.noa_address?c.noa_address:KIND[kindKey(c)]+' in '+c.city}
+function name(c){return REAL[c.apn]?REAL[c.apn].name:c.worship&&c.worship.name?c.worship.name:c.noa_address?c.noa_address:KIND[kindKey(c)]+' in '+c.city}
 function gap(c){ if(!c.sources.includes('conversion')){const p=pro(c); return p.gap<=0?{t:'Pencils at 0%'+(p.land==='donated'?' · land donated':''),k:'pass'}:{t:fmt(p.gap)+' short/home at 0%',k:p.gap<100000?'warn':'fail'}} const f=c.fund; if(f.gap_condo_at_fha==null) return {t:'Pencil: unknown',k:'unknown'}; if(f.gap_condo_at_fha<=0) return {t:'Pencils today',k:'pass'}; if(f.gap_condo_at_0pct<=0) return {t:'Pencils at 0%',k:'warn'}; return {t:fmt(f.gap_condo_at_0pct)+' short',k:'fail'}}
 function card(c){
   const a=AER[c.apn], s=PIPE[c.apn], g=gap(c), h=haz(c);
   const el=document.createElement('article'); el.className='card'; el.tabIndex=0; el.dataset.apn=c.apn; el.setAttribute('aria-current',open&&open.apn===c.apn);
   el.innerHTML=`<div class="thumb">${a?`<img loading="lazy" src="aerials/${esc(c.apn)}.jpg" alt="">`:`<div class="ph">No close-up photo yet<br>Zoom in on the map</div>`}<span class="kind" style="background:${COLORS[kindKey(c)]}">${KIND[kindKey(c)]}</span><button class="heart" aria-label="${s?'Remove from my list':'Save to my list'}" aria-pressed="${!!s}">${s?'♥':'♡'}</button></div>
-  <div class="cbody"><div class="ctitle">${esc(name(c))}</div><div class="homes">${c.homes==null?'Homes: unknown':c.sources.includes('conversion')?'≈ '+c.homes+' apartments to convert':c.homes>0?(c.roof_check==='thin'?'Up to ':'≈ ')+c.homes+' home'+(c.homes===1?'':'s'):'No room found'}</div>${c.apn==='39802812'?'<div class="tag stage" style="justify-self:start">Habitat OC’s own 2025 deal</div>':''}<div class="cline">${c.sources.includes('conversion')?(c.acres?c.acres.toFixed(2)+' acre lot':''):c.open_acres!=null?c.open_acres.toFixed(1)+' open acres':(c.acres?c.acres.toFixed(1)+' acres':'')} · ${esc(c.city)}</div>
+  <div class="cbody"><div class="ctitle">${esc(name(c))}</div><div class="homes">${c.homes==null?'Homes: unknown':c.sources.includes('conversion')?'≈ '+c.homes+' apartments to convert':c.homes>0?(c.roof_check==='thin'?'Up to ':'≈ ')+c.homes+' home'+(c.homes===1?'':'s'):'No room found'}</div>${REAL[c.apn]?`<div class="tag stage" style="justify-self:start">${REAL[c.apn].tag}</div>`:''}${(COUNCIL.byApn[c.apn]||[]).length?'<div class="tag" style="justify-self:start;background:#e6eefc;color:#1f4e9c">Council record</div>':''}<div class="cline">${c.sources.includes('conversion')?(c.acres?c.acres.toFixed(2)+' acre lot':''):c.open_acres!=null?c.open_acres.toFixed(1)+' open acres':(c.acres?c.acres.toFixed(1)+' acres':'')} · ${esc(c.city)}</div>
   <div class="tags"><span class="tag ${h?'warn':'pass'}">${h?h+' hazard':'No hazard zones'}</span><span class="tag ${g.k}">${g.t}</span>${c.hqta!=='no'?'<span class="tag pass">Transit</span>':''}${reviews(c).length?`<span class="tag review" title="${esc(reviews(c).map(x=>x.t).join(' · '))}">${reviews(c).some(x=>x.who==='team')?'Flagged':'Needs review'}</span>`:''}${s?`<span class="tag stage">${STAGES.find(x=>x[0]===s.stage)?.[1]||'Saved'}</span>`:''}</div></div>`;
   el.querySelector('.heart').onclick=e=>{e.stopPropagation(); setPipe(c.apn,{stage:s?'none':'saved'}); const b=e.currentTarget; const now=!s; b.setAttribute('aria-pressed',now); b.textContent=now?'♥':'♡';};
   el.onclick=()=>openSite(c); el.onkeydown=e=>{if(e.key==='Enter')openSite(c)};
@@ -1045,6 +1054,7 @@ function renderExplore(){
   const city=$('#city').value||'Orange County';
   $('#h-title').textContent=city; const hh=rows.reduce((a,c)=>a+(c.homes||0),0); $('#h-sub').textContent=`≈ ${hh.toLocaleString()} homes on ${rows.length.toLocaleString()} sites${$('#f-move').checked&&map.getSize().y>50?' in this map view':''}`;
   if(!rows.length){box.innerHTML=`<div class="empty"><b>No sites here.</b><span>Zoom out, pick another city, or loosen a filter.</span><button id="reset">Reset filters</button></div>`;$('#reset').onclick=resetFilters;return}
+  const cr=(COUNCIL.byCity[$('#city').value]||[]); if($('#city').value&&cr.length){const d=document.createElement('details'); d.className='council'; d.style.gridColumn='1/-1'; d.innerHTML=`<summary><b>City council &amp; community development record</b> · ${cr.length} item${cr.length===1?'':'s'}</summary><div style="display:grid;gap:8px;margin-top:8px">${cr.map(recHtml).join('')}</div>`; box.prepend(d);}
   more();
 }
 function more(){
@@ -1073,7 +1083,7 @@ function laws(c){const out=[]; if(c.sources.includes('religious_use')) out.push(
 const chip=(t,k)=>`<span class="chip ${k}">${t}</span>`;
 const hz=v=>v==='none found'?chip('clear','pass'):chip(esc(v),'warn');
 const q=(qq,a,k,body)=>`<details class="q"><summary><span class="qq">${qq}</span><span class="ans ${k}">${a}</span></summary><div class="body">${body}</div></details>`;
-function verdict(c){const h=haz(c), g=gap(c); const upto=c.roof_check==='thin'?'up to ':''; const room=c.sources.includes('conversion')?`About ${c.homes} apartments (estimated from lot size). `:c.homes==null?'':c.homes>0?`Room for ${upto||'about '}${c.homes} home${c.homes===1?'':'s'}${c.open_acres!=null?` on ${upto}${c.open_acres.toFixed(1)} open acres`:''}${c.roof_share!=null&&c.roof_share>0?` (${Math.round(c.roof_share*100)}% of the lot is under a roof)`:''}. `:'Little or no open land on this lot. ';
+function verdict(c){const h=haz(c), g=gap(c); const upto=c.roof_check==='thin'?'up to ':''; const room=c.sources.includes('conversion')?`About ${c.homes} apartments: a ${(c.acres||0).toFixed(2)}-acre lot × 43 apartments per acre, the density of Habitat OC’s Wellington Ave building (9 apartments on 0.21 acres). Confirm the real count with the County Assessor. `:c.homes==null?'':c.homes>0?`Room for ${upto||'about '}${c.homes} home${c.homes===1?'':'s'}${c.open_acres!=null?` on ${upto}${c.open_acres.toFixed(1)} open acres`:''}${c.roof_share!=null&&c.roof_share>0?` (${Math.round(c.roof_share*100)}% of the lot is under a roof)`:''}. `:'Little or no open land on this lot. ';
   const a=c.sources.includes('conversion')?(c.apn==='39802812'?'This is the building Habitat OC is already converting: 9 apartments becoming ownership condos, with $80,000 per unit from the City of Santa Ana.':'An existing low-rise apartment building on a lot the size of Habitat OC’s Wellington Ave deal. Buying and converting it to condos skips land and construction. Confirm it is a rental, not condos, and plan for the tenants.'):c.sources.includes('housing_element_site')?`The city already listed this site for housing${c.he_capacity?` (${c.he_capacity} homes)`:''}.`:c.sources.includes('religious_use')?'This is church land, which a 2023 state law (SB 4) may let the owner build homes on.':c.sources.includes('surplus_land_notice')?'A public agency offered this land as surplus.':'This lot is empty, and state law may allow small homes here.';
   const b=h?`${h} hazard zone to check.`:'No flood, fire or liquefaction zone found.';
   let d; if(!c.sources.includes('conversion')){const p=pro(c), t=pro(c,{rate:0.06625}); d=p.land==='donated'?(t.gap<=0?'With the land donated, a low-income family could afford a home here even at today’s rate.':p.gap<=0?'With the land donated and a 0% loan, a low-income family could afford a home here; at today’s rate each home is about '+fmt(t.gap)+' short.':'Even with the land donated and a 0% loan, each home is about '+fmt(p.gap)+' short.'):(p.gap<=0?'Bought at market, a low-income family could afford a home here with a 0% loan.':'Bought at market, each home is about '+fmt(p.gap)+' short even with a 0% loan; donated land or more homes on the lot would close it.')} else d=g.k==='pass'?'A low-income family could afford a condo here at today’s rate.':g.k==='warn'?'A low-income family could afford a condo here only with a 0% loan.':g.k==='fail'?'Even at 0% a condo here costs more than a low-income family can pay.':'';
@@ -1096,6 +1106,8 @@ function renderDrawer(c){
   d.innerHTML=`<div class="dhead"><button id="close" aria-label="Back to results">← Back</button><div style="min-width:0;flex:1"><h2>${esc(name(c))}</h2><div class="src">${esc(c.city)}${c.acres?' · '+c.acres.toFixed(1)+' acres':''} · parcel ${esc(c.apn)}</div></div><button class="heart" style="position:static;background:var(--soft);color:${p.stage?'var(--heart)':'var(--ink)'}" id="dheart" aria-pressed="${!!p.stage}" aria-label="${p.stage?'Remove from my list':'Save to my list'}">${p.stage?'♥':'♡'}</button></div>
   <div class="dbody">${hero}<div class="pad">
     <p class="verdict">${verdict(c)}</p>
+    ${(COUNCIL.byApn[c.apn]||[]).length?`<div class="track"><div style="font-weight:700">City council record</div>${COUNCIL.byApn[c.apn].map(recHtml).join('')}</div>`:''}
+    ${REAL[c.apn]?`<div class="track" style="background:#e8f3ea;color:#123a1b"><div style="font-weight:700">${REAL[c.apn].tag}</div><div>${REAL[c.apn].t}</div><div class="src" style="color:inherit;opacity:.75">${/^https?:/.test(REAL[c.apn].src)?`<a href="${REAL[c.apn].src}" target="_blank" rel="noopener" style="color:inherit">Source: Laguna Beach Independent</a>`:'Source: '+REAL[c.apn].src}</div></div>`:''}
     ${(()=>{const rv=reviews(c);return `<div class="track" style="background:${rv.length?'#fff4e5':'var(--soft)'};color:${rv.length?'#3d2a00':'inherit'}"><div style="font-weight:700">${rv.length?'Needs review':'Data checks look complete'}</div>${rv.map(x=>`<div>• ${esc(x.t)} <span class="src" style="color:inherit;opacity:.7">(${x.who==='team'?'team':'Lucki'})</span></div>`).join('')}<div class="stages"><button id="rv-btn" aria-pressed="${!!p.review}">${p.review?'Clear my flag':'Flag for review'}</button></div><label for="rv-note" class="src" ${p.review?'':'hidden'} id="rv-l">What looks wrong?</label><textarea id="rv-note" ${p.review?'':'hidden'} placeholder="e.g. the photo shows a school building the map missed">${esc(p.review_note||'')}</textarea></div>`})()}
     <div class="track"><div style="font-weight:700">My list</div><div class="stages" role="group" aria-label="Stage">${STAGES.map(([k,l])=>`<button data-stage="${k}" aria-pressed="${p.stage===k}">${l}</button>`).join('')}</div>
       <label for="note" class="src">Notes</label><textarea id="note" placeholder="Who you talked to, what they said, next step">${esc(p.note||'')}</textarea><div class="saved" id="savedmsg">${p.updated?'Last change '+new Date(p.updated).toLocaleString():''}${store==='shared'?' · shared list':' · this browser only'}</div></div>
@@ -1129,12 +1141,14 @@ function wirePencil(c){
     <div style="display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-variant-numeric:tabular-nums;margin-top:6px">
       <span>Build a home</span><span>${fmt(p.build)}</span><span>Design, permits, finance</span><span>${fmt(p.soft)}</span><span>City fees</span><span>${fmt(p.fees)}</span>
       <span>Land, per home</span><span>${p.land==='donated'?'$0':fmt(p.landPer)}</span><span><b>Cost per home</b></span><span><b>${fmt(p.cost)}</b></span>
+      <span class="src" style="grid-column:1/-1;margin-top:4px">A builder selling at market vs. a family on a low income:</span>
+      <span>Market price for this home</span><span>${fmt(PRO.market_psf*PRO.unit_sqft)}</span><span>Builder’s margin at market</span><span class="ans ${PRO.market_psf*PRO.unit_sqft-p.cost>=0?'pass':'fail'}">${fmt(PRO.market_psf*PRO.unit_sqft-p.cost)}</span>
       <span>Family can pay</span><span>− ${fmt(p.pay)}</span><span>City help</span><span>− ${fmt(p.help)}</span>
       <span><b>${p.gap<=0?'Left over per home':'Gap per home'}</b></span><span class="ans ${p.gap<=0?'pass':p.gap<100000?'warn':'fail'}">${fmt(Math.abs(p.gap))}</span>
       <span>${p.gap<=0?'Left over, whole site':'Gap, whole site'}</span><span>${fmt(Math.abs(p.total))}</span></div>
     <div class="bar" style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-top:4px" aria-hidden="true"><i style="width:${pc(p.build)}%;background:var(--accent)"></i><i style="width:${pc(p.soft+p.fees)}%;background:var(--warn)"></i><i style="width:${pc(p.landPer)}%;background:var(--fail)"></i></div>
     <div class="fine">${p.land==='market'?`Land: ${siteSqft(c).toLocaleString()} sq ft of ${c.open_acres!=null?'open ':''}land × $125/sq ft = ${fmt(p.landTotal)}, split across ${p.homes} home${p.homes===1?'':'s'}. More homes shrink this line.`:'With the land donated or leased for $1, more homes don’t change the cost per home; they change how many families it helps.'}</div>
-    <div class="src">Building $334/sq ft and fees $40,000/home: Terner Center, “Making Missing Middle Pencil”, June 2024 (Los Angeles, 2023 dollars). Land $125/sq ft: same report, LA; no Orange County figure found, ASSUMPTION. Design, permits and financing at 20% of building cost: ASSUMPTION. 1,000 sq ft home. What a family can pay: 30% of income covers the loan, 1.1% tax, $350 HOA and $120 insurance; incomes from HCD’s 2026 Orange County limits. Prototype, not financial advice.</div>`;
+    <div class="src">Building $334/sq ft and fees $40,000/home: Terner Center, “Making Missing Middle Pencil”, June 2024 (Los Angeles, 2023 dollars). Land $125/sq ft: same report, LA; no Orange County figure found, ASSUMPTION. Design, permits and financing at 20% of building cost: ASSUMPTION. 1,000 sq ft home. What a family can pay: 30% of income covers the loan, 1.1% tax, $350 HOA and $120 insurance; incomes from HCD’s 2026 Orange County limits. Market price $749/sq ft: same Terner report, LA townhome sales price (2023). The difference between the market price and what a family can pay is why builders don’t make these homes without help. Prototype, not financial advice.</div>`;
     $('#pen-ans').textContent=p.gap<=0?'Pencils':fmt(p.gap)+' short/home'; $('#pen-ans').className='ans '+(p.gap<=0?'pass':p.gap<100000?'warn':'fail');
     $('#pen-h').oninput=e=>{st.homes=+e.target.value;draw()};
     box.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.k==='rate'?+b.dataset.v:b.dataset.v;draw()});

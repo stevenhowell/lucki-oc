@@ -47,6 +47,11 @@ What it shows: more families on one lot shrink the land share per home (1 acre b
 
 2,791 existing low-rise apartment buildings (SCAG land use 1123) on 0.15–0.45 acres, the size of Habitat OC's 2025 Wellington Ave deal (9 units on 0.21 acres; City of Santa Ana letter A-2025-094: $720k down-payment help for 9 units, $200k relocation). Units estimated at Wellington's density, 43/acre (**ASSUMPTION**). The same land-use code includes condos people already own: confirm it's a rental. Tenants: Wellington gave renters under 120% AMI first right to buy and set aside relocation money.
 
+### Real deals and the city record
+
+- **Real deals on their sites:** 340 St. Ann's Dr, Laguna Beach (Neighborhood Congregational Church; 29 affordable rentals under SB 4; $6.71M city package; cut from 44 homes after neighbor opposition) and Habitat OC's 425 E. Wellington Ave (9 apartments to ownership condos). Lucki found both from public data on its own; at St. Ann's it estimated about 9 ownership townhomes, against 29 real rentals, so its density is deliberately conservative.
+- **City council and community-development record:** 17 council / planning items from 2022–2026 (`data/council_records.json`, every one read on its source page; unknown fields are null), shown under each city and, where the address geocodes within 80 m of a Lucki site, on that site (6 matched). Santa Ana's own records portal needs a browser session, so its 2025 Habitat staff reports are not included.
+
 **Demo video:** uploaded on the hub
 **Live demo:** https://claude.ai/artifact/VrgsLJftrxpbRD7cYCKLff (shared for the judges; ask if it won't open)
 
