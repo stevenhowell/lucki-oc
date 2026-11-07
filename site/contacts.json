@@ -108,5 +108,105 @@
   "website": null,
   "source_url": "https://churcheslist.com/friends-community-church-8",
   "confidence": "medium"
+ },
+ "39515130": {
+  "organization": "Church of the Foothills",
+  "address": "19211 Dodge Ave, Santa Ana (North Tustin)",
+  "phone": "(714) 544-1319",
+  "email": "churchoffice@chotf.org",
+  "contact_form": null,
+  "website": "https://churchofthefoothills.churchcenter.com",
+  "source_url": "https://churchofthefoothills.churchcenter.com/home",
+  "confidence": "high"
+ },
+ "85608112": {
+  "organization": "St. Michael's Abbey (moved to Silverado Canyon in 2021; this is the old campus)",
+  "address": "19292 El Toro Rd, Silverado",
+  "phone": "(657) 314-9071",
+  "email": "info@stmichaelsabbey.com",
+  "contact_form": null,
+  "website": "https://stmichaelsabbey.com",
+  "source_url": "https://stmichaelsabbey.com/contact-us/",
+  "confidence": "high"
+ },
+ "85601123": {
+  "organization": "St. Michael's Abbey (moved to Silverado Canyon in 2021; this is the old campus)",
+  "address": "19292 El Toro Rd, Silverado",
+  "phone": "(657) 314-9071",
+  "email": "info@stmichaelsabbey.com",
+  "contact_form": null,
+  "website": "https://stmichaelsabbey.com",
+  "source_url": "https://stmichaelsabbey.com/contact-us/",
+  "confidence": "high"
+ },
+ "85604147": {
+  "organization": "Trabuco Canyon Community Church",
+  "address": "30121 Canyon Creek Dr, Trabuco Canyon",
+  "phone": "(949) 858-0624",
+  "email": null,
+  "contact_form": null,
+  "website": "https://trabucochurch.org",
+  "source_url": "https://trabucochurch.org/contact",
+  "confidence": "high"
+ },
+ "85604145": {
+  "organization": "Trabuco Canyon Community Church",
+  "address": "30121 Canyon Creek Dr, Trabuco Canyon",
+  "phone": "(949) 858-0624",
+  "email": null,
+  "contact_form": null,
+  "website": "https://trabucochurch.org",
+  "source_url": "https://trabucochurch.org/contact",
+  "confidence": "high"
+ },
+ "40131120": {
+  "organization": "Unity of Tustin / Chapel in the Orange Grove",
+  "address": "14402 Prospect Ave, Tustin",
+  "phone": "(714) 730-3444",
+  "email": null,
+  "contact_form": null,
+  "website": null,
+  "source_url": "https://churcheslist.com/chapel-in-the-sacred-garden",
+  "confidence": "medium"
+ },
+ "50107210": {
+  "organization": "St. Paul's Episcopal Church",
+  "address": "1221 Wass St, Tustin",
+  "phone": "(714) 544-3141",
+  "email": null,
+  "contact_form": null,
+  "website": "https://stpauls.org",
+  "source_url": "https://ebiblestories.com/church/listing_34918.shtml",
+  "confidence": "medium"
+ },
+ "50107209": {
+  "organization": "St. Paul's Episcopal Church",
+  "address": "1221 Wass St, Tustin",
+  "phone": "(714) 544-3141",
+  "email": null,
+  "contact_form": null,
+  "website": "https://stpauls.org",
+  "source_url": "https://ebiblestories.com/church/listing_34918.shtml",
+  "confidence": "medium"
+ },
+ "12757225": {
+  "organization": "Sacred Heart Mission (St. Justin Martyr parish)",
+  "address": "10852 Harcourt Ave, Anaheim",
+  "phone": "714-774-2595",
+  "email": null,
+  "contact_form": null,
+  "website": null,
+  "source_url": "https://dioceseofocstg.wpengine.com/directories/parishes/saint-justin-martyr-catholic-church",
+  "confidence": "medium"
+ },
+ "12757332": {
+  "organization": "Sacred Heart Mission (St. Justin Martyr parish)",
+  "address": "10852 Harcourt Ave, Anaheim",
+  "phone": "714-774-2595",
+  "email": null,
+  "contact_form": null,
+  "website": null,
+  "source_url": "https://dioceseofocstg.wpengine.com/directories/parishes/saint-justin-martyr-catholic-church",
+  "confidence": "medium"
  }
 }
