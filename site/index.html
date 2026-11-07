@@ -717,6 +717,11 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 .static{cursor:grab;touch-action:none}
 .static.dragging{cursor:grabbing}
 .static .frame{transform-origin:0 0;will-change:transform}
+.maphide{position:absolute;left:-22px;top:50%;transform:translateY(-50%);z-index:1002;width:44px;height:44px;min-height:44px;border-radius:50%;padding:0;font-size:24px;line-height:1;display:grid;place-items:center;background:var(--panel,#fff);border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+.maphide:active{transform:translateY(-50%) scale(.94)}
+body.nomap .main{grid-template-columns:minmax(0,1fr)}
+body.nomap .mapwrap{display:none}
+body.nomap .maphide{left:8px}
 .maptoggle{position:absolute;right:12px;top:12px;z-index:1001;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .slegend{position:absolute;left:12px;bottom:12px;z-index:1000;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;display:grid;gap:4px}
 .slegend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-2px}
@@ -792,7 +797,7 @@ textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8
 .foot{font-size:11px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--line);background:var(--panel)}
 .leaflet-container{font:inherit;background:#2a2d29}
 .leaflet-tooltip{font:12px var(--body)}
-@media (max-width:900px){html,body{height:auto}body{overflow:auto}.main{flex:none}.cards{overflow:visible}.drawer{position:static}.main{grid-template-columns:1fr;grid-template-rows:46vh auto}.side{border-left:0;border-top:1px solid var(--line);min-height:70vh}.search{min-width:0;flex:1}}
+@media (max-width:900px){.maphide{display:none}html,body{height:auto}body{overflow:auto}.main{flex:none}.cards{overflow:visible}.drawer{position:static}.main{grid-template-columns:1fr;grid-template-rows:46vh auto}.side{border-left:0;border-top:1px solid var(--line);min-height:70vh}.search{min-width:0;flex:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -833,7 +838,7 @@ textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8
 
 <div class="main">
   <div class="mapwrap"><div id="static" class="static" aria-label="Aerial photo with the top sites"></div><div id="map" hidden aria-label="Interactive map of candidate sites"></div><div class="zoomctl" role="group" aria-label="Zoom"><button id="z-in" aria-label="Zoom in">+</button><button id="z-out" aria-label="Zoom out">−</button></div><div class="slegend" id="slegend"></div><button id="view-btn" class="maptoggle" aria-pressed="false">2D map</button></div>
-  <section class="side">
+  <section class="side"><button id="map-hide" class="maphide" aria-pressed="false" aria-label="Hide map" title="Hide map">‹</button>
     <div class="sidehead" id="sh-explore">
       <div style="min-width:0;flex:1"><h2 id="h-title">Orange County</h2><div class="sub" id="h-sub"></div></div>
       <label class="move" id="move-wrap" hidden><input type="checkbox" id="f-move"> Only what's on the map</label>
@@ -987,6 +992,7 @@ function setInteractive(on){
 }
 window.lucki={open:a=>{const c=byApn.get(a); if(c) openSite(c); return !!c}}; let qt; $('#q').oninput=e=>{clearTimeout(qt); qt=setTimeout(()=>{QS=e.target.value.trim().toLowerCase(); closeSite(); update();},250)};
 $('#view-btn').onclick=()=>{VIEW=VIEW==='sat'?'2d':'sat'; $('#view-btn').textContent=VIEW==='sat'?'2D map':'Satellite'; $('#view-btn').setAttribute('aria-pressed',VIEW==='2d'); drawStatic();};
+$('#map-hide').onclick=()=>{const off=document.body.classList.toggle('nomap'); const b=$('#map-hide'); b.textContent=off?'›':'‹'; b.setAttribute('aria-pressed',off); b.setAttribute('aria-label',off?'Show map':'Hide map'); b.title=off?'Show map':'Hide map'; if(!off) drawStatic();};
 $('#z-in').onclick=()=>zoomBy(2); $('#z-out').onclick=()=>zoomBy(.5);
 let dragMoved=false;
 (()=>{const el=$('#static'); let sx,sy,tx0,ty0,down=false;
