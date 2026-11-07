@@ -41,6 +41,24 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--panel)}
 .main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,1fr)}
 #map{min-height:300px;height:100%;background:#2a2d29}
+.mapwrap{position:relative;min-height:300px;background:#2a2d29;overflow:hidden}
+.mapwrap #map{position:absolute;inset:0}
+.static{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.static .frame{position:relative;width:100%;max-height:100%;aspect-ratio:1600/1000}
+.static img{display:block;width:100%;height:100%;object-fit:contain}
+.static svg{position:absolute;inset:0;width:100%;height:100%}
+.static .dot{cursor:pointer}
+.zoomctl{position:absolute;left:12px;top:12px;z-index:1001;display:grid;border:1px solid var(--line);border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.zoomctl button{width:44px;height:44px;min-height:44px;border:0;border-radius:0;background:#fff;color:#111;font-size:24px;padding:0}
+.zoomctl button+button{border-top:1px solid #ccc}
+.zoomctl button:disabled{color:#bbb}
+.static{cursor:grab;touch-action:none}
+.static.dragging{cursor:grabbing}
+.static .frame{transform-origin:0 0;will-change:transform}
+.maptoggle{position:absolute;right:12px;top:12px;z-index:1001;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.slegend{position:absolute;left:12px;bottom:12px;z-index:1000;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;display:grid;gap:4px}
+.slegend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-2px}
+.static .note{position:absolute;left:68px;top:12px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:4px 10px;border-radius:999px}
 .side{position:relative;min-width:0;display:flex;flex-direction:column;background:var(--paper);border-left:1px solid var(--line)}
 .sidehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px 8px}
 .sidehead h2{font-size:20px}
@@ -149,11 +167,11 @@ textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8
 </header>
 
 <div class="main">
-  <div id="map" aria-label="Map of candidate sites"></div>
+  <div class="mapwrap"><div id="static" class="static" aria-label="Aerial photo with the top sites"></div><div id="map" hidden aria-label="Interactive map of candidate sites"></div><div class="zoomctl" role="group" aria-label="Zoom"><button id="z-in" aria-label="Zoom in">+</button><button id="z-out" aria-label="Zoom out">−</button></div><div class="slegend" id="slegend"></div></div>
   <section class="side">
     <div class="sidehead" id="sh-explore">
       <div style="min-width:0;flex:1"><h2 id="h-title">Orange County</h2><div class="sub" id="h-sub"></div></div>
-      <label class="move"><input type="checkbox" id="f-move"> Only what's on the map</label>
+      <label class="move" id="move-wrap" hidden><input type="checkbox" id="f-move"> Only what's on the map</label>
       <select id="sort" aria-label="Sort"><option value="best">Best fit for a small nonprofit</option><option value="homes">Most homes</option><option value="size">Most open land</option><option value="gap">Smallest gap per home</option></select>
     </div>
     <div class="sidehead" id="sh-list" hidden><div style="flex:1"><h2>My list</h2><div class="sub" id="l-sub">Sites you saved, by where they stand.</div></div></div>
@@ -202,7 +220,7 @@ function pro(c,o={}){
 
 // ---------- data ----------
 $('#cards').innerHTML='<div class="empty"><b>Loading sites…</b><span>About 11,000 sites across Orange County.</span></div>';
-let D,AER,BASE;
+let D,AER,BASE; const OV=await fetch('overview.json').then(r=>r.ok?r.json():null).catch(()=>null); const CITYV=await fetch('cities.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
 try{ [D,AER,BASE]=await Promise.all([fetch('candidates.json').then(r=>{if(!r.ok) throw new Error('candidates.json '+r.status); return r.json()}),fetch('aerials.json').then(r=>r.json()).catch(()=>({})),fetch('base.json').then(r=>r.json()).catch(()=>[])]); }
 catch(e){ $('#cards').innerHTML=`<div class="empty"><b>Sites didn’t load.</b><span>${String(e&&e.message||e)}. Reload the page; if it keeps happening, the data file may still be publishing.</span><button onclick="location.reload()">Reload</button></div>`; return; }
 const C=D.candidates; const byApn=new Map(C.map(c=>[c.apn,c]));
@@ -234,8 +252,9 @@ function toast(t){const el=$('#h-sub');el.textContent=t}
 const R=20037508.34; const unproj=(x,y)=>[Math.atan(Math.exp(y/R*Math.PI))*360/Math.PI-90, x/R*180];
 const bnd=bb=>L.latLngBounds(unproj(bb[0],bb[1]),unproj(bb[2],bb[3]));
 const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:9,maxZoom:20,attributionControl:false}).setView([33.70,-117.84],10);
-let sized=false; new ResizeObserver(()=>{const z=map.getSize(); map.invalidateSize(); if(!sized&&$('#map').clientHeight>50){sized=true; fitCity(); update();}}).observe(document.getElementById('map'));
-BASE.forEach(t=>L.imageOverlay(t.file,bnd(t.bbox3857),{interactive:false}).addTo(map));
+new ResizeObserver(()=>{ if(interactive) map.invalidateSize(); else drawStatic(); }).observe(document.querySelector('.mapwrap'));
+let interactive=false, baseLoaded=false;
+function loadBase(){ if(baseLoaded) return; baseLoaded=true; BASE.forEach(t=>L.imageOverlay(t.file,bnd(t.bbox3857),{interactive:false}).addTo(map)); }
 const lotImgs=L.layerGroup().addTo(map); const shownImgs=new Map();
 const dots=L.layerGroup().addTo(map), outlines=L.layerGroup().addTo(map);
 const layerStyle={
@@ -249,6 +268,7 @@ const OPP={'Highest Resource':'#2e8b57','High Resource':'#6dbf6d','Moderate Reso
 const LAYERS={}; const legend=L.control({position:'bottomleft'});
 legend.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.id='legend';return d};legend.addTo(map);
 async function toggleLayer(name,on){
+  if(!interactive){ if(on&&!LAYER_DATA[name]) LAYER_DATA[name]=await fetch('layers/'+name+'.json').then(r=>r.json()).catch(()=>null); STATIC_LAYERS[name]=on; drawStatic(); drawLegend(); return; }
   if(on&&!LAYERS[name]){const g=await fetch('layers/'+name+'.json').then(r=>r.json());
     LAYERS[name]=L.geoJSON(g,{interactive:name==='opportunity',style:f=>name==='opportunity'?{color:'#333',weight:.4,fillColor:OPP[(f.properties.oppcat||'').trim()]||'#999',fillOpacity:.32}:layerStyle[name]}).bindTooltip(l=>name==='opportunity'?(l.feature.properties.oppcat||'unknown'):name==='flood'?'FEMA zone '+(l.feature.properties.FLD_ZONE||''):'',{sticky:true});}
   if(LAYERS[name]){ if(on){LAYERS[name].addTo(map);LAYERS[name].bringToBack()} else map.removeLayer(LAYERS[name]); }
@@ -257,6 +277,48 @@ async function toggleLayer(name,on){
 function drawLegend(){const on=$$('[data-layer]').filter(i=>i.checked);$('#c-layers').textContent=on.length?'· '+on.length:'';
   const el=$('#legend'); if(!el) return; el.innerHTML=`<div><i style="background:${COLORS.religious_use};border-radius:50%"></i>Church land</div><div><i style="background:${COLORS.housing_element_site};border-radius:50%"></i>City-approved site</div><div><i style="background:${COLORS.vacant};border-radius:50%"></i>Empty lot</div><div><i style="background:${COLORS.surplus_land_notice};border-radius:50%"></i>Public land</div><div><i style="background:${COLORS.conversion};border-radius:50%"></i>Apartments to convert</div><div><i style="background:#fff;border:2px solid ${'#d4482a'};border-radius:50%"></i>On my list</div>`+
   on.map(i=>{const n=i.dataset.layer;return n==='opportunity'?Object.entries(OPP).map(([k,v])=>`<div><i style="background:${v}"></i>${k}</div>`).join(''):`<div><i style="background:${layerStyle[n].fillColor};opacity:.7"></i>${i.parentElement.textContent.trim().split('  ')[0]}</div>`}).join('');}
+
+// ---------- still aerial (default) ----------
+const merc=(lon,lat)=>[lon*R/180, Math.log(Math.tan((90+lat)*Math.PI/360))/(Math.PI/180)*R/180];
+let ZS=1, TX=0, TY=0; const STATIC_LAYERS={}; const LAYER_DATA={};
+function applyZoom(){const f=$('#static .frame'); if(!f) return; const box=$('#static').getBoundingClientRect(), fr=f.getBoundingClientRect(); f.style.transform=`translate(${TX}px,${TY}px) scale(${ZS})`; $('#z-out').disabled=ZS<=1; $('#z-in').disabled=ZS>=8;
+  f.querySelectorAll('circle').forEach(c=>{const r0=+c.dataset.r; if(r0) c.setAttribute('r',(r0/Math.sqrt(ZS)).toFixed(1))}); f.querySelectorAll('text').forEach(t=>{const s0=+t.dataset.s; if(s0) t.setAttribute('font-size',(s0/Math.sqrt(ZS)).toFixed(1))});}
+function zoomBy(k,cx,cy){const box=$('#static').getBoundingClientRect(); const f=$('#static .frame'); if(!f) return; const fx=cx??box.width/2, fy=cy??box.height/2;
+  const nz=Math.min(8,Math.max(1,ZS*k)); const ox=f.offsetLeft, oy=f.offsetTop; const px=(fx-ox-TX)/ZS, py=(fy-oy-TY)/ZS; ZS=nz; TX=fx-ox-px*ZS; TY=fy-oy-py*ZS; if(ZS===1){TX=0;TY=0} applyZoom();}
+function drawStatic(){
+  const box=$('#static'); if(!box||interactive) return;
+  const city=$('#city').value; const V=(city&&CITYV[city])?{...CITYV[city],img:CITYV[city].file,label:city+', 2025 aerial'}:OV?{...OV,img:'overview.jpg',label:'Orange County, 2025 aerial'}:null;
+  if(!V){box.innerHTML='<div class="note">Photo not available. Use the interactive map.</div>';return}
+  const rows=(typeof filtered==='function')?filtered():C; const top=rows.slice(0,10);
+  const px=c=>{const [x,y]=merc(c.centroid[0],c.centroid[1]);return [(x-V.bbox3857[0])/(V.bbox3857[2]-V.bbox3857[0])*V.w,(V.bbox3857[3]-y)/(V.bbox3857[3]-V.bbox3857[1])*V.h]};
+  const inside=([x,y])=>x>=0&&y>=0&&x<=V.w&&y<=V.h; const zoomed=!!(city&&CITYV[city]);
+  const many=rows.slice(0,zoomed?300:600).map(c=>[c,px(c)]).filter(([c,p])=>inside(p)&&!top.includes(c));
+  const sel=open&&inside(px(open))?open:null;
+  const dot=(c,[x,y],i)=>{const t=i>=0, col=COLORS[kindKey(c)]||'#666', r=t?(zoomed?15:10):(zoomed?6:4);
+    return `<g class="dot" data-apn="${esc(c.apn)}"><circle data-r="${r}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${col}" fill-opacity="${t?1:.7}" stroke="${PIPE[c.apn]?'#d4482a':'#fff'}" stroke-width="${PIPE[c.apn]?3:t?2:1}"><title>${esc(name(c))}</title></circle>${t?`<text data-s="${zoomed?15:11}" x="${x.toFixed(1)}" y="${(y+5).toFixed(1)}" text-anchor="middle" font-size="${zoomed?15:11}" font-weight="700" fill="#fff" style="pointer-events:none">${i+1}</text>`:''}</g>`};
+  const selMark=sel?(()=>{const [x,y]=px(sel);return `<circle cx="${x}" cy="${y}" r="${zoomed?26:18}" fill="none" stroke="#ff8a5b" stroke-width="4"/>`})():'';
+  const P=(lon,lat)=>{const [x,y]=merc(lon,lat);return ((x-V.bbox3857[0])/(V.bbox3857[2]-V.bbox3857[0])*V.w).toFixed(1)+' '+((V.bbox3857[3]-y)/(V.bbox3857[3]-V.bbox3857[1])*V.h).toFixed(1)};
+  const lay=Object.entries(STATIC_LAYERS).filter(([n,on])=>on&&LAYER_DATA[n]).map(([n])=>`<g>${LAYER_DATA[n].features.map(f=>{const g=f.geometry; if(!g) return ''; const polys=g.type==='Polygon'?[g.coordinates]:g.type==='MultiPolygon'?g.coordinates:[]; const st=n==='opportunity'?{fillColor:OPP[(f.properties.oppcat||'').trim()]||'#999',fillOpacity:.32,color:'#333'}:layerStyle[n]; return `<path d="${polys.map(p=>p.map(r=>'M'+r.map(q=>P(q[0],q[1])).join(' L ')+'Z').join(' ')).join(' ')}" fill="${st.fillColor}" fill-opacity="${st.fillOpacity}" stroke="${st.color}" stroke-width="1" vector-effect="non-scaling-stroke"><title>${esc(n==='opportunity'?(f.properties.oppcat||''):n==='flood'?'FEMA zone '+(f.properties.FLD_ZONE||''):'')}</title></path>`}).join('')}</g>`).join('');
+  box.innerHTML=`<div class="frame"><img src="${V.img}" alt="${esc(V.label)}"><svg viewBox="0 0 ${V.w} ${V.h}" role="img" aria-label="Top sites">${lay}${many.map(([c,p])=>dot(c,p,-1)).join('')}${top.map((c,i)=>inside(px(c))?dot(c,px(c),i):'').join('')}${selMark}</svg></div><div class="note">${esc(V.label)} · numbers match the list</div>`;
+  box.querySelectorAll('.dot').forEach(d=>d.onclick=e=>{if(dragMoved) return; const c=byApn.get(d.dataset.apn); if(c) openSite(c)});
+  applyZoom();
+  $('#slegend').innerHTML=Object.entries(KIND).map(([k,l])=>`<div><i style="background:${COLORS[k]}"></i>${l}</div>`).join('')+`<div><i style="background:#fff;border:2px solid #d4482a"></i>On my list</div>`;
+}
+function setInteractive(on){
+  interactive=on; $('#static').hidden=on; $('#slegend').hidden=on; $('#map').hidden=!on;
+  $('#map-toggle').textContent=on?'Back to photo':'Open interactive map';
+  $('#move-wrap')&&($('#move-wrap').hidden=!on);
+  if(on){ loadBase(); setTimeout(()=>{map.invalidateSize(); if(open) map.setView([open.centroid[1],open.centroid[0]],17); else fitCity(); drawMarkers(); if(tab==='explore'&&!open) renderExplore();},60); }
+  else { drawStatic(); if(tab==='explore'&&!open) renderExplore(); }
+}
+$('#z-in').onclick=()=>zoomBy(2); $('#z-out').onclick=()=>zoomBy(.5);
+let dragMoved=false;
+(()=>{const el=$('#static'); let sx,sy,tx0,ty0,down=false;
+  el.addEventListener('pointerdown',e=>{if(ZS<=1) return; down=true; dragMoved=false; sx=e.clientX; sy=e.clientY; tx0=TX; ty0=TY; el.classList.add('dragging')});
+  window.addEventListener('pointermove',e=>{if(!down) return; const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.abs(dx)+Math.abs(dy)>4) dragMoved=true; TX=tx0+dx; TY=ty0+dy; applyZoom()});
+  window.addEventListener('pointerup',()=>{if(down){down=false; el.classList.remove('dragging'); setTimeout(()=>dragMoved=false,0)}});
+  el.addEventListener('wheel',e=>{e.preventDefault(); const r=el.getBoundingClientRect(); zoomBy(e.deltaY<0?1.25:.8,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+})();
 
 // ---------- filters ----------
 let tab='explore', open=null, shown=0, rows=[];
@@ -282,10 +344,11 @@ function filtered(){
   $('#c-kind').textContent=ks.length<NK?'· '+ks.length:''; $('#c-more').textContent=(n-(ks.length<NK?1:0))?'· '+(n-(ks.length<NK?1:0)):'';
   return r;
 }
-function inView(r){const sz=map.getSize(); if(!$('#f-move').checked||sz.x<50||sz.y<50) return r; const b=map.getBounds(); return r.filter(c=>b.contains([c.centroid[1],c.centroid[0]]))}
+function inView(r){const sz=map.getSize(); if(!interactive||!$('#f-move').checked||sz.x<50||sz.y<50) return r; const b=map.getBounds(); return r.filter(c=>b.contains([c.centroid[1],c.centroid[0]]))}
 
 // ---------- markers ----------
 function drawMarkers(){
+  if(!interactive){ drawStatic(); return; }
   dots.clearLayers(); outlines.clearLayers();
   const z=map.getZoom(), all=filtered(), b=map.getBounds().pad(.2);
   const vis=all.filter(c=>b.contains([c.centroid[1],c.centroid[0]]));
@@ -355,7 +418,7 @@ function verdict(c){const h=haz(c), g=gap(c); const upto=c.roof_check==='thin'?'
   let d; if(!c.sources.includes('conversion')){const p=pro(c), t=pro(c,{rate:0.06625}); d=p.land==='donated'?(t.gap<=0?'With the land donated, a low-income family could afford a home here even at today’s rate.':p.gap<=0?'With the land donated and a 0% loan, a low-income family could afford a home here; at today’s rate each home is about '+fmt(t.gap)+' short.':'Even with the land donated and a 0% loan, each home is about '+fmt(p.gap)+' short.'):(p.gap<=0?'Bought at market, a low-income family could afford a home here with a 0% loan.':'Bought at market, each home is about '+fmt(p.gap)+' short even with a 0% loan; donated land or more homes on the lot would close it.')} else d=g.k==='pass'?'A low-income family could afford a condo here at today’s rate.':g.k==='warn'?'A low-income family could afford a condo here only with a 0% loan.':g.k==='fail'?'Even at 0% a condo here costs more than a low-income family can pay.':'';
   const rc=c.roof_check==='thin'?` The county’s building map shows only ${c.n_buildings} building${c.n_buildings===1?'':'s'} on this ${((c.acres||c.open_acres||0)).toFixed?'':''}lot; check the photo, the open land may be less than this.`:'';
   return `${room}${a} ${b} ${d}${rc}`;}
-function openSite(c){open=c; renderDrawer(c); const z=Math.max(map.getZoom(),17); map.flyTo([c.centroid[1],c.centroid[0]],z,{duration:.6}); $$('.card').forEach(e=>e.setAttribute('aria-current',e.dataset.apn===c.apn));}
+function openSite(c){open=c; renderDrawer(c); if(interactive){const z=Math.max(map.getZoom(),17); map.flyTo([c.centroid[1],c.centroid[0]],z,{duration:.6});} else drawStatic(); $$('.card').forEach(e=>e.setAttribute('aria-current',e.dataset.apn===c.apn));}
 function closeSite(){open=null; $('#drawer').hidden=true; drawMarkers();}
 function renderDrawer(c){
   const d=$('#drawer'); d.hidden=false; const a=AER[c.apn], f=c.fund, prog=f.city_program, g=gap(c), h=haz(c), p=PIPE[c.apn]||{};
@@ -437,7 +500,7 @@ async function wireDraft(c){
 function resetFilters(){$$('[data-kind]').forEach(i=>i.checked=true);['#f-safe','#f-transit','#f-pencil'].forEach(s=>$(s).checked=false);$('#f-size').value='0';update()}
 function fitCity(){const city=$('#city').value; const r=filtered(); if(city&&r.length){map.fitBounds(L.latLngBounds(r.map(c=>[c.centroid[1],c.centroid[0]])).pad(.1),{maxZoom:15})} else if(!city) map.setView([33.70,-117.84],10);}
 function update(){drawMarkers(); if(tab==='explore'&&!open) renderExplore();}
-$('#city').onchange=()=>{try{localStorage.setItem('lucki.city',$('#city').value)}catch(e){} closeSite(); fitCity(); update();};
+$('#city').onchange=()=>{ZS=1;TX=0;TY=0;try{localStorage.setItem('lucki.city',$('#city').value)}catch(e){} closeSite(); fitCity(); update();};
 $$('[data-kind]').forEach(i=>i.onchange=update);
 ['#f-safe','#f-transit','#f-pencil','#f-size','#sort','#f-move','#f-room','#f-review'].forEach(s=>$(s).onchange=update);
 $$('[data-layer]').forEach(i=>i.onchange=()=>toggleLayer(i.dataset.layer,i.checked));
